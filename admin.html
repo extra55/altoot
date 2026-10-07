@@ -242,6 +242,11 @@
     }
 
     async function checkSubscriptionStatus() {
+        // إظهار لوحة التحكم فوراً إذا كان المستخدم مسجل الدخول لتجنب ظهور صفحة الدخول المؤقتة
+        if (localStorage.getItem("admin_auth") === "true") {
+            showDashboard();
+        }
+
         try {
             var res = await fetch(SHEET_API_URL + "?action=checkSubscription");
             var data = await res.json();
@@ -249,15 +254,8 @@
                 lockSystem(data.message);
                 return;
             }
-
-            if (localStorage.getItem("admin_auth") === "true") {
-                showDashboard();
-            }
         } catch (err) {
             console.error("فحص الاشتراك فشل:", err);
-            if (localStorage.getItem("admin_auth") === "true") {
-                showDashboard();
-            }
         }
     }
 
