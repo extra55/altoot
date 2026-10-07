@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> صيدلية 🩺</title>
+    <title>كوزمتك</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
         body { background: #0f172a; color: #fff; padding: 15px; padding-bottom: 50px; direction: rtl; max-width: 500px; margin: auto; position: relative; }
@@ -15,6 +15,13 @@
         .cart-icon-btn { background: #0284c7; color: white; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; display: flex; align-items: center; gap: 6px; }
         .cart-badge { background: #ef4444; color: white; border-radius: 50%; padding: 2px 7px; font-size: 11px; }
 
+        /* حقل البحث عن منتج */
+        .search-container { margin-bottom: 12px; position: relative; display: flex; align-items: center; }
+        .search-input { width: 100%; padding: 10px 14px; padding-left: 32px; border-radius: 10px; border: 1px solid #334155; background: #1e293b; color: #fff; font-size: 13px; outline: none; transition: border-color 0.2s; }
+        .search-input:focus { border-color: #38bdf8; }
+        .clear-search-btn { position: absolute; left: 10px; color: #94a3b8; font-size: 14px; cursor: pointer; display: none; user-select: none; transition: color 0.2s; }
+        .clear-search-btn:hover { color: #fff; }
+
         /* شريط الأقسام الأفقي */
         .categories-bar { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 15px; scrollbar-width: none; }
         .category-tab { background: #1e293b; color: #cbd5e1; padding: 8px 16px; border-radius: 20px; font-size: 12px; cursor: pointer; border: 1px solid #334155; white-space: nowrap; }
@@ -23,7 +30,7 @@
         /* شبكة عرض المنتجات (Grid Layout) */
         #productsGrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
         
-        /* كروت المنتجات بحجم أسرع وصور أكبر */
+        /* كروت المنتجات */
         .product-card { background: #1e293b; border-radius: 12px; padding: 10px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid #334155; cursor: pointer; position: relative; }
         .img-box { width: 100%; height: 130px; border-radius: 8px; background: #0f172a; display: flex; align-items: center; justify-content: center; font-size: 36px; overflow: hidden; margin-bottom: 8px; }
         .img-box img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
@@ -44,17 +51,29 @@
         .page { display: block; }
         .hidden { display: none !important; }
         
-        /* صفحة تفاصيل المنتج */
+        /* صفحة تفاصيل المنتج والسلايدر */
         .detail-card { background: #1e293b; border-radius: 12px; padding: 15px; border: 1px solid #334155; }
-        .detail-img-box { width: 100%; height: 220px; border-radius: 10px; background: #0f172a; display: flex; align-items: center; justify-content: center; font-size: 60px; overflow: hidden; margin-bottom: 12px; }
-        .detail-img-box img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; }
+        .detail-img-box { width: 100%; height: 320px; border-radius: 10px; background: #f5efe6; display: flex; align-items: center; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; scroll-behavior: smooth; }
+        .detail-img-box::-webkit-scrollbar { display: none; }
+        .detail-img-box img { flex: 0 0 100%; min-width: 100%; max-width: 100%; height: 100%; object-fit: contain; border-radius: 10px; scroll-snap-align: start; }
+        
+        /* أسهم التنقل للكمبيوتر والموبايل */
+        .slider-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(15, 23, 42, 0.75); color: #38bdf8; border: 1px solid #0284c7; width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-size: 16px; font-weight: bold; display: flex; align-items: center; justify-content: center; z-index: 10; user-select: none; transition: background 0.2s; }
+        .slider-btn:hover { background: #0284c7; color: #fff; }
+        .slider-btn.prev { right: 8px; }
+        .slider-btn.next { left: 8px; }
+
+        /* مؤشر وجود صور إضافية */
+        .img-indicator { position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%); background: rgba(15, 23, 42, 0.7); color: #38bdf8; padding: 2px 10px; border-radius: 20px; font-size: 11px; border: 1px solid #0284c7; pointer-events: none; font-weight: bold; box-shadow: 0 2px 6px rgba(0,0,0,0.4); }
+
         .detail-desc-box { background: #0f172a; padding: 12px; border-radius: 8px; border: 1px solid #334155; margin: 15px 0; color: #cbd5e1; font-size: 13px; line-height: 1.5; }
         .detail-desc-box h3 { color: #38bdf8; font-size: 14px; margin-bottom: 6px; }
+        .detail-desc-box p { white-space: pre-line; }
 
-        /* صفحة السلة */
+        /* صفحة السلة وزر الرجوع */
         .cart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #334155; padding-bottom: 10px; }
-        .btn-back { background: #475569; color: #f8fafc; border: 1px solid #64748b; padding: 7px 16px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: bold; transition: background 0.2s; }
-        .btn-back:hover { background: #64748b; }
+        .btn-back { background: #881337; color: #ffffff; border: 1px solid #be123c; padding: 7px 16px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: bold; transition: background 0.2s; }
+        .btn-back:hover { background: #9f1239; }
 
         .cart-item { background: #1e293b; border-radius: 10px; padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #334155; }
         .cart-item-title { font-size: 14px; color: #fff; font-weight: bold; }
@@ -65,12 +84,12 @@
         .form-input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #fff; font-size: 13px; margin-bottom: 10px; outline: none; }
         .form-input:focus { border-color: #38bdf8; }
         
-        .total-box { background: #1e293b; padding: 12px; border-radius: 8px; font-weight: bold; margin-top: 15px; display: flex; justify-content: space-between; border: 1px solid #38bdf8; }
+        .total-box { background: #1e293b; padding: 12px; border-radius: 8px; font-weight: bold; margin-top: 15px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #38bdf8; }
         .delivery-note { font-size: 11px; color: #94a3b8; text-align: center; margin-top: 6px; padding: 6px 10px; background: #1e293b; border-radius: 6px; border: 1px dashed #334155; display: flex; align-items: center; justify-content: center; gap: 5px; }
         
         .btn-send-wa { width: 100%; padding: 14px; background: #22c55e; color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 15px; cursor: pointer; margin-top: 15px; }
 
-        /* الفوتر الخفيف أسفل الصفحة ثابت */
+        /* الفوتر الخفيف */
         .footer { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 500px; background: #0f172a; text-align: center; padding: 6px 0; color: #64748b; font-size: 10px; border-top: 1px solid #1e293b; z-index: 100; direction: ltr; }
     </style>
 </head>
@@ -80,12 +99,18 @@
 <div id="shopPage" class="page">
     <div class="header">
         <div>
-            <h1>صيدلية تجريبية 🩺</h1>
+            <h1>كوزمتك تجريبي</h1>
             <p>افضل المنتجات من ماركات عالمية</p>
         </div>
         <button class="cart-icon-btn" onclick="openCartPage()">
             🛒 السلة <span class="cart-badge" id="cartBadgeCount">0</span>
         </button>
+    </div>
+
+    <!-- حقل البحث عن منتج -->
+    <div class="search-container">
+        <input type="text" id="searchInput" class="search-input" placeholder="🔍 ابحث عن منتج بالاسم أو الماركة..." oninput="onSearchInput()">
+        <span id="clearSearchBtn" class="clear-search-btn" onclick="clearSearch()">✕</span>
     </div>
 
     <!-- قائمة الأقسام بالعرض -->
@@ -119,10 +144,21 @@
     <div id="cartItemsList"></div>
 
     <div id="cartSummarySection">
-        <div class="total-box">
+        <!-- حقل كود الخصم (فوق المبلغ الإجمالي) -->
+        <div style="background: #1e293b; padding: 12px; border-radius: 10px; margin-top: 15px; border: 1px solid #334155;">
+            <label class="form-label">كود الخصم (إن وجد):</label>
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="couponInput" class="form-input" placeholder="أدخل كود الخصم هنا..." style="margin-bottom: 0; text-transform: uppercase;">
+                <button type="button" onclick="applyCoupon()" style="background: #0284c7; color: white; border: none; padding: 0 16px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; white-space: nowrap;">تطبيق</button>
+            </div>
+            <div id="couponStatusMsg" style="font-size: 12px; margin-top: 6px; display: none;"></div>
+        </div>
+
+        <div class="total-box" id="cartGrandTotalBox">
             <span>المبلغ الإجمالي:</span>
             <span id="cartGrandTotal" style="color:#22c55e;">0 د.ع</span>
         </div>
+        
         <div class="delivery-note">
             🚚 ستضاف إجور التوصيل الى المبلغ الاجمالي
         </div>
@@ -132,30 +168,49 @@
             <input type="text" id="custName" class="form-input" placeholder="اكتب اسمك هنا...">
 
             <label class="form-label">رقم الهاتف:</label>
-            <input type="text" id="custPhone" class="form-input" placeholder="07700000000">
+            <input type="text" id="custPhone" class="form-input" placeholder="0780xxxxxxx">
 
             <label class="form-label">العنوان التفصيلي:</label>
             <input type="text" id="custAddress" class="form-input" placeholder="المدينة / المنطقة / أقرب نقطة دالة">
         </div>
 
-        <button class="btn-send-wa" onclick="sendOrderToWhatsApp()">📲 ارسال الى واتساب الصيدلية</button>
+        <button class="btn-send-wa" onclick="sendOrderToWhatsApp()">📲 ارسال الى واتساب المتجر</button>
     </div>
 </div>
 
 <script>
     var SHEET_API_URL = "https://script.google.com/macros/s/AKfycbxawmW3P80aNBPdrlYLS3XZsSuUOW6z0XgCvkiudi4RW8N0vTIaxJJB5eoT3vGQ2aiq/exec"; 
-    var PHARMACY_WA = "9647700000000";
+    var PHARMACY_WA = "9647803342472";
 
     var products = [];
     var categories = ["الكل"];
     var activeCategory = "الكل";
     var cart = {};
     var currentDetailId = null;
+    var searchQuery = "";
 
-    // جلب البيانات تلقائياً عند فتح الصفحة
+    var appliedCoupon = null;
+    var allCoupons = [];
+
+    // --- دوال حفظ واسترجاع السلة من الذاكرة المحلية ---
+    function saveCartToStorage() {
+        localStorage.setItem('user_cart', JSON.stringify(cart));
+    }
+
+    function loadCartFromStorage() {
+        var savedCart = localStorage.getItem('user_cart');
+        if (savedCart) {
+            try {
+                cart = JSON.parse(savedCart);
+            } catch(e) {
+                cart = {};
+            }
+        }
+    }
+
     function fetchProductsFromSheet() {
         var grid = document.getElementById('productsGrid');
-        grid.innerHTML = '<p style="text-align:center; grid-column: 1 / -1; padding:30px; color:#cbd5e1;">جار تحميل المنتجات من جدول البيانات...</p>';
+        grid.innerHTML = '<p style="text-align:center; grid-column: 1 / -1; padding:30px; color:#cbd5e1;">جار تحميل المنتجات   ...</p>';
 
         fetch(SHEET_API_URL)
             .then(function(response) { return response.json(); })
@@ -178,6 +233,54 @@
             });
     }
 
+    function fetchCouponsFromSheet() {
+        fetch(SHEET_API_URL + "?action=getCoupons")
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
+                allCoupons = data || [];
+            })
+            .catch(function(err) {
+                console.log("Error fetching coupons:", err);
+            });
+    }
+
+    async function applyCoupon() {
+        var input = document.getElementById("couponInput");
+        var msg = document.getElementById("couponStatusMsg");
+        if (!input) return;
+
+        var codeVal = input.value.trim().toUpperCase();
+        if (!codeVal) {
+            appliedCoupon = null;
+            msg.style.display = "block";
+            msg.style.color = "#ef4444";
+            msg.innerText = "يرجى كتابة كود الخصم أولاً";
+            renderCartItems();
+            return;
+        }
+
+        try {
+            var res = await fetch(SHEET_API_URL + "?action=getCoupons");
+            allCoupons = await res.json();
+        } catch(e) {}
+
+        var found = allCoupons.find(c => String(c.code).trim().toUpperCase() === codeVal);
+
+        if (found) {
+            appliedCoupon = found;
+            msg.style.display = "block";
+            msg.style.color = "#4ade80";
+            msg.innerText = "✅ تم تطبيق كود الخصم بنجاح (" + found.discount + "%)";
+        } else {
+            appliedCoupon = null;
+            msg.style.display = "block";
+            msg.style.color = "#fca5a5";
+            msg.innerText = "❌ كود الخصم غير صحيح أو غير فعال";
+        }
+
+        renderCartItems();
+    }
+
     function renderCategories() {
         var html = "";
         for (var i = 0; i < categories.length; i++) {
@@ -194,17 +297,45 @@
         renderProducts();
     }
 
-    // عرض المنتجات على شكل شبكة (Grid)
+    function onSearchInput() {
+        var input = document.getElementById('searchInput');
+        searchQuery = input.value.trim().toLowerCase();
+        
+        var clearBtn = document.getElementById('clearSearchBtn');
+        if (clearBtn) {
+            clearBtn.style.display = input.value.length > 0 ? 'block' : 'none';
+        }
+        
+        renderProducts();
+    }
+
+    function clearSearch() {
+        var input = document.getElementById('searchInput');
+        input.value = '';
+        onSearchInput();
+        input.focus();
+    }
+
     function renderProducts() {
         var html = "";
+        var matchCount = 0;
+
         for (var i = 0; i < products.length; i++) {
             var p = products[i];
 
-            if (activeCategory === "الكل" || p.category === activeCategory) {
+            var matchesCategory = (searchQuery !== "" || activeCategory === "الكل" || p.category === activeCategory);
+            
+            var pName = (p.name || "").toLowerCase();
+            var pBrand = (p.brand || "").toLowerCase();
+            var matchesSearch = (searchQuery === "") || (pName.indexOf(searchQuery) !== -1 || pBrand.indexOf(searchQuery) !== -1);
+
+            if (matchesCategory && matchesSearch) {
+                matchCount++;
                 var qty = cart[p.id] || 0;
                 
-                var imageContent = (p.image && p.image.trim().startsWith('http')) 
-                    ? '<img src="' + p.image + '" alt="' + p.name + '" onerror="this.onerror=null; this.parentNode.innerHTML=\'' + p.icon + '\';">'
+                var cardImage = (p.images && p.images.length > 0) ? p.images[0] : p.image;
+                var imageContent = (cardImage && cardImage.trim().startsWith('http')) 
+                    ? '<img src="' + cardImage + '" alt="' + p.name + '" onerror="this.onerror=null; this.parentNode.innerHTML=\'' + p.icon + '\';">'
                     : p.icon;
 
                 html += '<div class="product-card" onclick="openProductDetail(' + p.id + ')">' +
@@ -227,11 +358,23 @@
                 html += '</div></div>';
             }
         }
+
+        if (matchCount === 0 && products.length > 0) {
+            html = '<p style="text-align:center; grid-column: 1 / -1; padding:30px; color:#94a3b8;">لا توجد نتائج مطابقة للبحث</p>';
+        }
+
         document.getElementById('productsGrid').innerHTML = html;
         updateBadge();
     }
 
-    // فتح صفحة خاصة للمنتج عند الضغط عليه
+    function scrollGallery(direction) {
+        var box = document.getElementById('detailImgBox');
+        if (box) {
+            var scrollAmount = box.clientWidth;
+            box.scrollBy({ left: direction * scrollAmount * -1, behavior: 'smooth' });
+        }
+    }
+
     function openProductDetail(id) {
         var p = getProductById(id);
         if (!p) return;
@@ -241,14 +384,39 @@
         document.getElementById('cartPage').classList.add('hidden');
         document.getElementById('productDetailPage').classList.remove('hidden');
 
-        var imageContent = (p.image && p.image.trim().startsWith('http')) 
-            ? '<img src="' + p.image + '" alt="' + p.name + '" onerror="this.onerror=null; this.parentNode.innerHTML=\'' + p.icon + '\';">'
-            : p.icon;
+        var imgList = (p.images && p.images.length > 0) ? p.images : ((p.image && p.image.trim().startsWith('http')) ? [p.image] : []);
+        var imageContent = "";
+        var imageCount = 0;
 
-        var description = p.desc || p.description || "منتج عالي الجودة متوفر لدى صيدلية الشفاء.";
+        if (imgList.length > 0) {
+            for (var k = 0; k < imgList.length; k++) {
+                if (imgList[k] && imgList[k].trim().startsWith('http')) {
+                    imageContent += '<img src="' + imgList[k] + '" alt="' + p.name + '" onerror="this.style.display=\'none\';">';
+                    imageCount++;
+                }
+            }
+        }
+        if (!imageContent) {
+            imageContent = p.icon;
+        }
+
+        var description = p.desc || p.description || "منتج عالي الجودة متوفر لدينا.";
+        
+        var indicatorHtml = "";
+        var navButtonsHtml = "";
+
+        if (imageCount > 1) {
+            indicatorHtml = '<div class="img-indicator"> اسحب لعرض الصور (' + imageCount + ') </div>';
+            navButtonsHtml = '<button class="slider-btn prev" onclick="scrollGallery(1)">❯</button>' +
+                             '<button class="slider-btn next" onclick="scrollGallery(-1)">❮</button>';
+        }
 
         var html = '<div class="detail-card">' +
-            '<div class="detail-img-box">' + imageContent + '</div>' +
+            '<div style="position: relative; margin-bottom: 12px;">' +
+                '<div class="detail-img-box" id="detailImgBox">' + imageContent + '</div>' +
+                navButtonsHtml +
+                indicatorHtml +
+            '</div>' +
             '<span class="brand-tag">' + p.brand + '</span>' +
             '<h2 style="color:#fff; margin:8px 0;">' + p.name + '</h2>' +
             '<div style="color:#38bdf8; font-size:18px; font-weight:bold;">' + p.price.toLocaleString() + ' د.ع</div>' +
@@ -263,7 +431,6 @@
         renderDetailQtyControls(p.id);
     }
 
-    // زر الكمية الخاص بصفحة التفاصيل
     function renderDetailQtyControls(id) {
         var qty = cart[id] || 0;
         var box = document.getElementById('detailQtyBox');
@@ -291,6 +458,8 @@
             cart[id] = newQty;
         }
 
+        saveCartToStorage();
+
         renderProducts();
         
         if (!document.getElementById('productDetailPage').classList.contains('hidden') && currentDetailId === id) {
@@ -312,6 +481,12 @@
         document.getElementById('shopPage').classList.add('hidden');
         document.getElementById('productDetailPage').classList.add('hidden');
         document.getElementById('cartPage').classList.remove('hidden');
+
+        document.getElementById('custName').value = localStorage.getItem('cust_name') || '';
+        document.getElementById('custPhone').value = localStorage.getItem('cust_phone') || '';
+        document.getElementById('custAddress').value = localStorage.getItem('cust_address') || '';
+
+        fetchCouponsFromSheet();
         renderCartItems();
     }
 
@@ -325,7 +500,7 @@
     function renderCartItems() {
         var listContainer = document.getElementById('cartItemsList');
         var html = "";
-        var grandTotal = 0;
+        var subTotal = 0;
         var itemCount = 0;
 
         for (var id in cart) {
@@ -334,7 +509,7 @@
             if (p) {
                 itemCount++;
                 var itemTotal = p.price * qty;
-                grandTotal += itemTotal;
+                subTotal += itemTotal;
 
                 html += '<div class="cart-item">' +
                     '<div>' +
@@ -353,10 +528,35 @@
         if (itemCount === 0) {
             listContainer.innerHTML = '<p style="text-align:center; padding:30px; color:#94a3b8;">السلة فارغة حالياً</p>';
             document.getElementById('cartSummarySection').style.display = 'none';
+            appliedCoupon = null;
+            var couponInput = document.getElementById("couponInput");
+            if (couponInput) couponInput.value = "";
+            var couponStatusMsg = document.getElementById("couponStatusMsg");
+            if (couponStatusMsg) couponStatusMsg.style.display = "none";
         } else {
             listContainer.innerHTML = html;
             document.getElementById('cartSummarySection').style.display = 'block';
-            document.getElementById('cartGrandTotal').innerText = grandTotal.toLocaleString() + ' د.ع';
+
+            var discountAmount = 0;
+            if (appliedCoupon && appliedCoupon.discount) {
+                discountAmount = Math.round((subTotal * appliedCoupon.discount) / 100);
+            }
+            var finalTotal = subTotal - discountAmount;
+
+            var totalBox = document.getElementById('cartGrandTotalBox');
+            if (totalBox) {
+                if (discountAmount > 0) {
+                    totalBox.innerHTML = '<span>المبلغ الإجمالي:</span>' +
+                        '<div style="text-align:left;">' +
+                            '<span style="text-decoration:line-through; color:#94a3b8; font-size:12px; margin-left:6px;">' + subTotal.toLocaleString() + ' د.ع</span>' +
+                            '<span style="color:#22c55e;">' + finalTotal.toLocaleString() + ' د.ع</span>' +
+                            '<div style="font-size:11px; color:#38bdf8; font-weight:normal;">(خصم ' + appliedCoupon.discount + '%: -' + discountAmount.toLocaleString() + ' د.ع)</div>' +
+                        '</div>';
+                } else {
+                    totalBox.innerHTML = '<span>المبلغ الإجمالي:</span>' +
+                        '<span style="color:#22c55e;">' + subTotal.toLocaleString() + ' د.ع</span>';
+                }
+            }
         }
     }
 
@@ -381,28 +581,45 @@
             return;
         }
 
-        var msg = "*طلب جديد من كتلوج الصيدلية 🩺*\n\n";
+        localStorage.setItem('cust_name', name);
+        localStorage.setItem('cust_phone', phone);
+        localStorage.setItem('cust_address', address);
+
+        var msg = "*طلب جديد من المتجر 🩺*\n\n";
         msg += "*الاسم:* " + name + "\n";
         msg += "*رقم الهاتف:* " + phone + "\n";
         msg += "*العنوان:* " + address + "\n";
         msg += "------------------------\n*المنتجات المختارة:*\n";
 
-        var grandTotal = 0;
+        var subTotal = 0;
         for (var id in cart) {
             var p = getProductById(id);
             if (p) {
                 var itemTotal = p.price * cart[id];
-                grandTotal += itemTotal;
+                subTotal += itemTotal;
                 msg += "• " + p.name + " (" + cart[id] + "x) = " + itemTotal.toLocaleString() + " د.ع\n";
             }
         }
 
-        msg += "------------------------\n*الإجمالي الكلي:* " + grandTotal.toLocaleString() + " د.ع";
+        var discountAmount = 0;
+        if (appliedCoupon && appliedCoupon.discount) {
+            discountAmount = Math.round((subTotal * appliedCoupon.discount) / 100);
+            var finalTotal = subTotal - discountAmount;
+            msg += "------------------------\n";
+            msg += "*المجموع:* " + subTotal.toLocaleString() + " د.ع\n";
+            msg += "*كود الخصم:* " + appliedCoupon.code + " (" + appliedCoupon.discount + "%)\n";
+            msg += "*قيمة الخصم:* -" + discountAmount.toLocaleString() + " د.ع\n";
+            msg += "*الإجمالي الكلي بعد الخصم:* " + finalTotal.toLocaleString() + " د.ع";
+        } else {
+            msg += "------------------------\n*الإجمالي الكلي:* " + subTotal.toLocaleString() + " د.ع";
+        }
+
         window.open("https://wa.me/" + PHARMACY_WA + "?text=" + encodeURIComponent(msg), '_blank');
     }
 
-    // بدء الجلب التلقائي عند التشغيل
+    loadCartFromStorage();
     fetchProductsFromSheet();
+    fetchCouponsFromSheet();
 </script>
 
 </body>
