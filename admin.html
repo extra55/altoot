@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم المتجر - إدارة المنتجات</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        body { background: #0f172a; color: #fff; padding: 20px; max-width: 650px; margin: auto; direction: rtl; }
+        
+        .card { background: #1e293b; border-radius: 12px; padding: 20px; border: 1px solid #334155; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .header-box { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0284c7; padding-bottom: 8px; margin-bottom: 15px; }
+        h2 { color: #38bdf8; font-size: 18px; }
+        
+        /* Nav Tabs */
+        .nav-tabs { display: flex; gap: 8px; margin-bottom: 15px; background: #0f172a; padding: 5px; border-radius: 10px; }
+        .tab-btn { flex: 1; padding: 10px; background: transparent; color: #94a3b8; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 13px; transition: 0.2s; }
+        .tab-btn.active { background: #0284c7; color: #fff; }
+
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-size: 13px; color: #cbd5e1; margin-bottom: 6px; font-weight: bold; }
+        input, select, textarea { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: #fff; font-size: 13px; outline: none; transition: border-color 0.2s; }
+        input:focus, textarea:focus, select:focus { border-color: #38bdf8; }
+        
+        .row-2 { display: flex; gap: 10px; }
+        .row-2 > div { flex: 1; }
+
+        .upload-box { background: #0f172a; border: 1px dashed #38bdf8; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 10px; }
+        .upload-box input[type="file"] { display: none; }
+        .upload-btn { background: #0284c7; color: white; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; display: inline-block; margin-top: 5px; }
+        .preview-img { max-width: 100%; height: 80px; object-fit: contain; margin-top: 8px; border-radius: 6px; display: none; margin-left: auto; margin-right: auto; }
+
+        /* زر حذف الصورة */
+        .btn-remove-img { background: #ef4444; color: #fff; border: none; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; margin-top: 8px; display: none; }
+        .btn-remove-img:hover { background: #dc2626; }
+
+        .btn-submit { width: 100%; padding: 12px; background: #22c55e; color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 15px; cursor: pointer; margin-top: 10px; }
+        .btn-cancel { width: 100%; padding: 10px; background: #64748b; color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 13px; cursor: pointer; margin-top: 5px; display: none; }
+        .btn-logout { background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
+
+        .status-msg { margin-top: 12px; padding: 10px; border-radius: 8px; font-size: 13px; text-align: center; display: none; }
+        .status-success { background: #166534; color: #4ade80; }
+        .status-error { background: #991b1b; color: #fca5a5; }
+        .status-loading { background: #1e40af; color: #93c5fd; }
+
+        /* Product List Styling */
+        .product-item { display: flex; align-items: center; justify-content: space-between; background: #0f172a; padding: 10px 12px; border-radius: 8px; border: 1px solid #334155; margin-bottom: 10px; gap: 10px; }
+        .product-item img { width: 50px; height: 50px; object-fit: cover; border-radius: 6px; background: #1e293b; }
+        .product-info { flex: 1; }
+        .product-info h4 { font-size: 14px; color: #f8fafc; }
+        .product-info p { font-size: 12px; color: #38bdf8; font-weight: bold; margin-top: 2px; }
+        .product-actions { display: flex; gap: 6px; }
+        .btn-action { padding: 6px 10px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .btn-edit { background: #f59e0b; color: #fff; }
+        .btn-delete { background: #ef4444; color: #fff; }
+
+        .hidden { display: none !important; }
+
+        /* شاشة انتهاء الاشتراك */
+        .expired-card { text-align: center; border: 1px solid #ef4444; padding: 30px 20px; background: #1e293b; border-radius: 12px; }
+        .expired-icon { font-size: 50px; margin-bottom: 15px; }
+        .expired-title { color: #ef4444; font-size: 20px; margin-bottom: 12px; font-weight: bold; }
+        .expired-text { color: #cbd5e1; font-size: 14px; line-height: 1.6; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+<!-- ================= واجهة انتهاء الاشتراك ================= -->
+<div id="expiredCard" class="expired-card hidden">
+    <div class="expired-icon">⚠️</div>
+    <div class="expired-title">عذراً، انتهى الاشتراك الشهري</div>
+    <p class="expired-text" id="expiredMsgText">
+        لقد انتهت فترة الاشتراك الخاصة بملف لوحة التحكم.<br>
+        يرجى التواصل مع مدير الخدمة لتجديد الاشتراك وإعادة تفعيل الصفحة.
+    </p>
+</div>
+
+<!-- ================= 1. واجهة تسجيل الدخول ================= -->
+<div id="loginCard" class="card">
+    <div class="header-box">
+        <h2>🔒 تسجيل الدخول للوحة التحكم</h2>
+    </div>
+    
+    <form onsubmit="handleLogin(event)">
+        <div class="form-group">
+            <label>اسم المستخدم (Username)</label>
+            <input type="text" id="loginUser" placeholder="أدخل اسم المستخدم..." required>
+        </div>
+
+        <div class="form-group">
+            <label>كلمة المرور (Password)</label>
+            <input type="password" id="loginPass" placeholder="أدخل كلمة المرور..." required>
+        </div>
+
+        <button type="submit" id="loginBtn" class="btn-submit" style="background:#0284c7;">دخول 🔑</button>
+    </form>
+
+    <div id="loginStatus" class="status-msg"></div>
+</div>
+
+<!-- ================= 2. واجهة التحكم الرئيسية ================= -->
+<div id="dashboardCard" class="card hidden">
+    <div class="header-box">
+        <h2 id="dashboardTitle">⚙️ إدارة المتجر</h2>
+        <button class="btn-logout" onclick="logout()">تسجيل خروج 🚪</button>
+    </div>
+
+    <!-- الشريط العلوي للتنقل -->
+    <div class="nav-tabs">
+        <button class="tab-btn active" id="tabFormBtn" onclick="switchTab('form')">➕ إضافة / تعديل</button>
+        <button class="tab-btn" id="tabListBtn" onclick="switchTab('list')">📦 المنتجات الحالية</button>
+        <button class="tab-btn" id="tabCouponsBtn" onclick="switchTab('coupons')">🎟️ أكواد الخصم</button>
+    </div>
+
+    <!-- تبويب نموذج الإضافة والتعديل -->
+    <div id="formTab">
+        <form id="productForm" onsubmit="handleProductSubmit(event)">
+            <div class="form-group">
+                <label>اسم المنتج *</label>
+                <input type="text" id="pName" placeholder="مثال: سيروم فيتامين سي" required>
+            </div>
+
+            <div class="row-2">
+                <div class="form-group">
+                    <label>القسم / الفئة *</label>
+                    <input type="text" id="pCategory" placeholder="مثال: العناية بالبشرة" required>
+                </div>
+                <div class="form-group">
+                    <label>الماركة *</label>
+                    <input type="text" id="pBrand" placeholder="مثال: Ordinary" required>
+                </div>
+            </div>
+
+            <div class="row-2">
+                <div class="form-group">
+                    <label>السعر (د.ع) *</label>
+                    <input type="number" id="pPrice" placeholder="15000" required>
+                </div>
+                <div class="form-group">
+                    <label>رمز الأيقونة (إيموجي)</label>
+                    <input type="text" id="pIcon" value="🧴">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>وصف المنتج</label>
+                <textarea id="pDesc" rows="3" placeholder="اكتب تفاصيل ومميزات المنتج هنا..."></textarea>
+            </div>
+
+            <label>صور المنتج (اتركها كما هي في التعديل إذا لا تريد تغييرها):</label>
+
+            <div class="upload-box">
+                <span style="font-size:12px; color:#cbd5e1;">الصورة الرئيسية (G) *</span><br>
+                <label for="img1" class="upload-btn">📁 اختيار صورة جديدة</label>
+                <input type="file" id="img1" accept="image/*" onchange="previewFile(this, 'prev1', 'removeBtn1')">
+                <img id="prev1" class="preview-img">
+                <br>
+                <button type="button" id="removeBtn1" class="btn-remove-img" onclick="removeImage(0, 'img1', 'prev1', 'removeBtn1')">🗑️ حذف الصورة</button>
+            </div>
+
+            <div class="upload-box">
+                <span style="font-size:12px; color:#cbd5e1;">الصورة الثانية - إضافية (H)</span><br>
+                <label for="img2" class="upload-btn">📁 اختيار صورة جديدة</label>
+                <input type="file" id="img2" accept="image/*" onchange="previewFile(this, 'prev2', 'removeBtn2')">
+                <img id="prev2" class="preview-img">
+                <br>
+                <button type="button" id="removeBtn2" class="btn-remove-img" onclick="removeImage(1, 'img2', 'prev2', 'removeBtn2')">🗑️ حذف الصورة</button>
+            </div>
+
+            <div class="upload-box">
+                <span style="font-size:12px; color:#cbd5e1;">الصورة الثالثة - إضافية (I)</span><br>
+                <label for="img3" class="upload-btn">📁 اختيار صورة جديدة</label>
+                <input type="file" id="img3" accept="image/*" onchange="previewFile(this, 'prev3', 'removeBtn3')">
+                <img id="prev3" class="preview-img">
+                <br>
+                <button type="button" id="removeBtn3" class="btn-remove-img" onclick="removeImage(2, 'img3', 'prev3', 'removeBtn3')">🗑️ حذف الصورة</button>
+            </div>
+
+            <button type="submit" id="submitBtn" class="btn-submit">🚀 حفظ ونشر المنتج</button>
+            <button type="button" id="cancelEditBtn" class="btn-cancel" onclick="resetFormToCreate()">✖ إلغاء التعديل</button>
+        </form>
+    </div>
+
+    <!-- تبويب قائمة المنتجات -->
+    <div id="listTab" class="hidden">
+        <div class="form-group">
+            <input type="text" id="searchBox" placeholder="🔍 بحث عن منتج..." oninput="filterProducts()">
+        </div>
+        <div id="productsContainer">
+            <p style="text-align:center; color:#94a3b8; padding:20px;">جار تحميل المنتجات...</p>
+        </div>
+    </div>
+
+    <!-- تبويب إدارة أكواد الخصم -->
+    <div id="couponsTab" class="hidden">
+        <div style="background: #0f172a; padding: 15px; border-radius: 10px; border: 1px solid #334155; margin-bottom: 20px;">
+            <label style="color: #38bdf8; font-size: 14px; margin-bottom: 12px; display: block;">➕ إضافة كود خصم جديد</label>
+            <form onsubmit="handleAddCoupon(event)">
+                <div class="row-2">
+                    <div class="form-group">
+                        <label>كود الخصم *</label>
+                        <input type="text" id="couponCode" placeholder="مثال: SAVE10" required style="text-transform: uppercase;">
+                    </div>
+                    <div class="form-group">
+                        <label>نسبة الخصم (%) *</label>
+                        <input type="number" id="couponDiscount" placeholder="مثال: 10" min="1" max="100" required>
+                    </div>
+                </div>
+                <button type="submit" id="saveCouponBtn" class="btn-submit" style="background:#0284c7; margin-top:5px;">💾 حفظ الكود</button>
+            </form>
+        </div>
+
+        <label style="color: #38bdf8; font-size: 14px; margin-bottom: 10px; display: block;">🏷️ أكواد الخصم المحفوظة</label>
+        <div id="couponsListContainer">
+            <p style="text-align:center; color:#94a3b8; padding:20px;">جار تحميل أكواد الخصم...</p>
+        </div>
+    </div>
+
+    <div id="productStatus" class="status-msg"></div>
+</div>
+
+<script>
+    var SHEET_API_URL = "https://script.google.com/macros/s/AKfycbxawmW3P80aNBPdrlYLS3XZsSuUOW6z0XgCvkiudi4RW8N0vTIaxJJB5eoT3vGQ2aiq/exec";
+
+    var allProducts = [];
+    var allCoupons = [];
+    var editingProductId = null;
+    var existingImages = ["", "", ""];
+
+    window.onload = function() {
+        checkSubscriptionStatus();
+    };
+
+    function lockSystem(message) {
+        document.getElementById("loginCard").classList.add("hidden");
+        document.getElementById("dashboardCard").classList.add("hidden");
+        if (message) {
+            document.getElementById("expiredMsgText").innerText = message;
+        }
+        document.getElementById("expiredCard").classList.remove("hidden");
+        localStorage.removeItem("admin_auth");
+    }
+
+    async function checkSubscriptionStatus() {
+        try {
+            var res = await fetch(SHEET_API_URL + "?action=checkSubscription");
+            var data = await res.json();
+            if (data.status === "expired") {
+                lockSystem(data.message);
+                return;
+            }
+
+            if (localStorage.getItem("admin_auth") === "true") {
+                showDashboard();
+            }
+        } catch (err) {
+            console.error("فحص الاشتراك فشل:", err);
+            if (localStorage.getItem("admin_auth") === "true") {
+                showDashboard();
+            }
+        }
+    }
+
+    async function handleLogin(event) {
+        event.preventDefault();
+        var user = document.getElementById("loginUser").value.trim();
+        var pass = document.getElementById("loginPass").value.trim();
+        var status = document.getElementById("loginStatus");
+        var btn = document.getElementById("loginBtn");
+
+        btn.disabled = true;
+        status.className = "status-msg status-loading";
+        status.style.display = "block";
+        status.innerText = "جار التحقق من البيانات...";
+
+        try {
+            var response = await fetch(SHEET_API_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "login", username: user, password: pass })
+            });
+
+            var resData = await response.json();
+
+            if (resData.status === "expired") {
+                lockSystem(resData.message);
+                return;
+            }
+
+            if (resData.status === "success") {
+                localStorage.setItem("admin_auth", "true");
+                showDashboard();
+            } else {
+                throw new Error(resData.message || "بيانات الدخول غير صحيحة");
+            }
+        } catch (err) {
+            status.className = "status-msg status-error";
+            status.innerText = "❌ " + err.message;
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    function showDashboard() {
+        document.getElementById("loginCard").classList.add("hidden");
+        document.getElementById("dashboardCard").classList.remove("hidden");
+        loadProductsList();
+    }
+
+    function logout() {
+        if (!confirm("هل انت متأكد من تسجيل الخروج")) return;
+        localStorage.removeItem("admin_auth");
+        location.reload();
+    }
+
+    function switchTab(tabName) {
+        var formTab = document.getElementById("formTab");
+        var listTab = document.getElementById("listTab");
+        var couponsTab = document.getElementById("couponsTab");
+
+        var tabFormBtn = document.getElementById("tabFormBtn");
+        var tabListBtn = document.getElementById("tabListBtn");
+        var tabCouponsBtn = document.getElementById("tabCouponsBtn");
+
+        formTab.classList.add("hidden");
+        listTab.classList.add("hidden");
+        couponsTab.classList.add("hidden");
+
+        tabFormBtn.classList.remove("active");
+        tabListBtn.classList.remove("active");
+        tabCouponsBtn.classList.remove("active");
+
+        if (tabName === 'form') {
+            formTab.classList.remove("hidden");
+            tabFormBtn.classList.add("active");
+        } else if (tabName === 'list') {
+            listTab.classList.remove("hidden");
+            tabListBtn.classList.add("active");
+            loadProductsList();
+        } else if (tabName === 'coupons') {
+            couponsTab.classList.remove("hidden");
+            tabCouponsBtn.classList.add("active");
+            loadCouponsList();
+        }
+    }
+
+    async function loadProductsList() {
+        var container = document.getElementById("productsContainer");
+        container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px;">جار تحميل المنتجات...</p>';
+        try {
+            var res = await fetch(SHEET_API_URL);
+            var resData = await res.json();
+            if (resData && resData.status === "expired") {
+                lockSystem(resData.message);
+                return;
+            }
+            allProducts = resData;
+            renderProducts(allProducts);
+        } catch (err) {
+            container.innerHTML = '<p style="text-align:center; color:#ef4444; padding:20px;">فشل في جلب المنتجات</p>';
+        }
+    }
+
+    function renderProducts(products) {
+        var container = document.getElementById("productsContainer");
+        if (!products || !Array.isArray(products) || products.length === 0) {
+            container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px;">لا يوجد منتجات حالياً</p>';
+            return;
+        }
+
+        var html = "";
+        products.forEach(function(p) {
+            var mainImg = p.image || "https://via.placeholder.com/50?text=No+Img";
+            html += `
+                <div class="product-item">
+                    <img src="${mainImg}" alt="${p.name}">
+                    <div class="product-info">
+                        <h4>${p.icon || '🧴'} ${p.name}</h4>
+                        <p>${Number(p.price).toLocaleString()} د.ع | ${p.category}</p>
+                    </div>
+                    <div class="product-actions">
+                        <button class="btn-action btn-edit" onclick="startEditProduct('${p.id}')">✏ تعديل</button>
+                        <button class="btn-action btn-delete" onclick="deleteProduct('${p.id}', '${p.name}')">🗑️ حذف</button>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    function filterProducts() {
+        var q = document.getElementById("searchBox").value.toLowerCase();
+        var filtered = allProducts.filter(p => 
+            p.name.toLowerCase().includes(q) || 
+            p.category.toLowerCase().includes(q) || 
+            p.brand.toLowerCase().includes(q)
+        );
+        renderProducts(filtered);
+    }
+
+    /* --- إدارة أكواد الخصم --- */
+    async function loadCouponsList() {
+        var container = document.getElementById("couponsListContainer");
+        container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px;">جار تحميل أكواد الخصم...</p>';
+        try {
+            var res = await fetch(SHEET_API_URL + "?action=getCoupons");
+            var resData = await res.json();
+            if (resData && resData.status === "expired") {
+                lockSystem(resData.message);
+                return;
+            }
+            allCoupons = resData;
+            renderCoupons(allCoupons);
+        } catch (err) {
+            container.innerHTML = '<p style="text-align:center; color:#ef4444; padding:20px;">فشل في جلب أكواد الخصم</p>';
+        }
+    }
+
+    function renderCoupons(coupons) {
+        var container = document.getElementById("couponsListContainer");
+        if (!coupons || !Array.isArray(coupons) || coupons.length === 0) {
+            container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px;">لا توجد أكواد خصم مضافة حالياً</p>';
+            return;
+        }
+
+        var html = "";
+        coupons.forEach(function(c) {
+            html += `
+                <div class="product-item" style="background:#0f172a; border:1px solid #334155; padding:12px; border-radius:8px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <span style="font-weight:bold; color:#38bdf8; font-size:15px; font-family:monospace; background:#1e293b; padding:4px 8px; border-radius:6px; border:1px dashed #0284c7;">${c.code}</span>
+                        <span style="color:#22c55e; font-weight:bold; font-size:13px; margin-right:10px;">خصم: ${c.discount}%</span>
+                    </div>
+                    <div>
+                        <button class="btn-action btn-delete" onclick="deleteCoupon('${c.code}')">🗑️ حذف</button>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    async function handleAddCoupon(event) {
+        event.preventDefault();
+        var code = document.getElementById("couponCode").value.trim().toUpperCase();
+        var discount = document.getElementById("couponDiscount").value;
+        var btn = document.getElementById("saveCouponBtn");
+        var statusMsg = document.getElementById('productStatus');
+
+        if (!code || !discount) return;
+
+        btn.disabled = true;
+        statusMsg.className = "status-msg status-loading";
+        statusMsg.style.display = "block";
+        statusMsg.innerText = "جار حفظ كود الخصم...";
+
+        try {
+            var response = await fetch(SHEET_API_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "addCoupon", code: code, discount: discount })
+            });
+
+            var resData = await response.json();
+
+            if (resData.status === "expired") {
+                lockSystem(resData.message);
+                return;
+            }
+
+            if (resData.status === "success") {
+                statusMsg.className = "status-msg status-success";
+                statusMsg.innerText = "✅ تم إضافة كود الخصم بنجاح";
+                document.getElementById("couponCode").value = "";
+                document.getElementById("couponDiscount").value = "";
+                loadCouponsList();
+
+                setTimeout(function() {
+                    statusMsg.style.display = "none";
+                }, 3000);
+            } else {
+                throw new Error(resData.message || "فشل الحفظ");
+            }
+        } catch (err) {
+            statusMsg.className = "status-msg status-error";
+            statusMsg.innerText = "❌ تعذر إتمام العملية: " + err.message;
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    async function deleteCoupon(code) {
+        if (!confirm(`هل أنت تأكد من حذف كود الخصم: "${code}"؟`)) return;
+
+        var statusMsg = document.getElementById('productStatus');
+        statusMsg.className = "status-msg status-loading";
+        statusMsg.style.display = "block";
+        statusMsg.innerText = "جار حذف كود الخصم...";
+
+        try {
+            var response = await fetch(SHEET_API_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "deleteCoupon", code: code })
+            });
+
+            var resData = await response.json();
+
+            if (resData.status === "expired") {
+                lockSystem(resData.message);
+                return;
+            }
+
+            if (resData.status === "success") {
+                statusMsg.className = "status-msg status-success";
+                statusMsg.innerText = "✅ تم حذف كود الخصم بنجاح";
+                loadCouponsList();
+
+                setTimeout(function() {
+                    statusMsg.style.display = "none";
+                }, 3000);
+            } else {
+                throw new Error(resData.message || "فشل الحذف");
+            }
+        } catch (err) {
+            statusMsg.className = "status-msg status-error";
+            statusMsg.innerText = "❌ تعذر الحذف: " + err.message;
+        }
+    }
+
+    function startEditProduct(id) {
+        var p = allProducts.find(item => String(item.id) === String(id));
+        if (!p) return;
+
+        editingProductId = p.id;
+        document.getElementById("pName").value = p.name;
+        document.getElementById("pCategory").value = p.category;
+        document.getElementById("pBrand").value = p.brand;
+        document.getElementById("pPrice").value = p.price;
+        document.getElementById("pIcon").value = p.icon;
+        document.getElementById("pDesc").value = p.desc || "";
+
+        existingImages = [
+            (p.rawImages && p.rawImages[0]) ? p.rawImages[0] : (p.images && p.images[0] ? p.images[0] : ""),
+            (p.rawImages && p.rawImages[1]) ? p.rawImages[1] : (p.images && p.images[1] ? p.images[1] : ""),
+            (p.rawImages && p.rawImages[2]) ? p.rawImages[2] : (p.images && p.images[2] ? p.images[2] : "")
+        ];
+
+        setPreview('prev1', 'removeBtn1', existingImages[0]);
+        setPreview('prev2', 'removeBtn2', existingImages[1]);
+        setPreview('prev3', 'removeBtn3', existingImages[2]);
+
+        document.getElementById("submitBtn").innerText = "💾 حفظ التعديلات";
+        document.getElementById("submitBtn").style.background = "#f59e0b";
+        document.getElementById("cancelEditBtn").style.display = "block";
+
+        switchTab('form');
+    }
+
+    function setPreview(elementId, btnId, url) {
+        var img = document.getElementById(elementId);
+        var btn = document.getElementById(btnId);
+        if (url) {
+            img.src = url;
+            img.style.display = "block";
+            if (btn) btn.style.display = "inline-block";
+        } else {
+            img.style.display = "none";
+            if (btn) btn.style.display = "none";
+        }
+    }
+
+    function removeImage(index, inputId, previewId, btnId) {
+        if (!confirm("هل انت متأكد من حذف الصورة")) return;
+        existingImages[index] = "";
+        document.getElementById(inputId).value = "";
+        var img = document.getElementById(previewId);
+        img.src = "";
+        img.style.display = "none";
+        var btn = document.getElementById(btnId);
+        if (btn) btn.style.display = "none";
+    }
+
+    function resetFormToCreate() {
+        editingProductId = null;
+        existingImages = ["", "", ""];
+        document.getElementById("productForm").reset();
+
+        setPreview('prev1', 'removeBtn1', '');
+        setPreview('prev2', 'removeBtn2', '');
+        setPreview('prev3', 'removeBtn3', '');
+
+        document.getElementById("submitBtn").innerText = "🚀 حفظ ونشر المنتج";
+        document.getElementById("submitBtn").style.background = "#22c55e";
+        document.getElementById("cancelEditBtn").style.display = "none";
+    }
+
+    async function deleteProduct(id, name) {
+        if (!confirm(`هل أنت تأكد من حذف المنتج: "${name}"؟`)) return;
+
+        var statusMsg = document.getElementById('productStatus');
+        statusMsg.className = "status-msg status-loading";
+        statusMsg.style.display = "block";
+        statusMsg.innerText = "جار حذف المنتج...";
+
+        try {
+            var response = await fetch(SHEET_API_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "delete", id: id })
+            });
+
+            var resData = await response.json();
+
+            if (resData.status === "expired") {
+                lockSystem(resData.message);
+                return;
+            }
+
+            if (resData.status === "success") {
+                statusMsg.className = "status-msg status-success";
+                statusMsg.innerText = "✅ تم حذف المنتج بنجاح";
+                loadProductsList();
+            } else {
+                throw new Error(resData.message || "فشل الحذف");
+            }
+        } catch (err) {
+            statusMsg.className = "status-msg status-error";
+            statusMsg.innerText = "❌ تعذر الحذف: " + err.message;
+        }
+    }
+
+    function previewFile(input, previewId, btnId) {
+        var preview = document.getElementById(previewId);
+        var btn = document.getElementById(btnId);
+        var file = input.files[0];
+        if (file) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+                if (btn) btn.style.display = 'inline-block';
+            }
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function compressAndConvertToBase64(file, maxWidth = 1000, quality = 0.8) {
+        return new Promise(function(resolve, reject) {
+            if (!file) { resolve(null); return; }
+
+            var reader = new FileReader();
+            reader.onload = function(event) {
+                var img = new Image();
+                img.onload = function() {
+                    var width = img.width;
+                    var height = img.height;
+
+                    if (width > maxWidth || height > maxWidth) {
+                        if (width > height) {
+                            height = Math.round((height * maxWidth) / width);
+                            width = maxWidth;
+                        } else {
+                            width = Math.round((width * maxWidth) / height);
+                            height = maxWidth;
+                        }
+                    }
+
+                    var canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+
+                    var ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    var dataUrl = canvas.toDataURL('image/jpeg', quality);
+                    var base64String = dataUrl.split(',')[1];
+
+                    resolve({
+                        base64: base64String,
+                        mimeType: 'image/jpeg',
+                        name: file.name.replace(/\.[^/.]+$/, "") + ".jpg"
+                    });
+                };
+                img.onerror = reject;
+                img.src = event.target.result;
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
+
+    async function handleProductSubmit(event) {
+        event.preventDefault();
+
+        var submitBtn = document.getElementById('submitBtn');
+        var statusMsg = document.getElementById('productStatus');
+
+        submitBtn.disabled = true;
+        statusMsg.className = "status-msg status-loading";
+        statusMsg.style.display = "block";
+        statusMsg.innerText = "جار معالجة البيانات والحفظ...";
+
+        try {
+            var imgFile1 = document.getElementById('img1').files[0];
+            var imgFile2 = document.getElementById('img2').files[0];
+            var imgFile3 = document.getElementById('img3').files[0];
+
+            var imgData1 = imgFile1 ? await compressAndConvertToBase64(imgFile1) : existingImages[0];
+            var imgData2 = imgFile2 ? await compressAndConvertToBase64(imgFile2) : existingImages[1];
+            var imgData3 = imgFile3 ? await compressAndConvertToBase64(imgFile3) : existingImages[2];
+
+            var payload = {
+                action: editingProductId ? "update" : "add",
+                id: editingProductId,
+                name: document.getElementById('pName').value.trim(),
+                category: document.getElementById('pCategory').value.trim(),
+                brand: document.getElementById('pBrand').value.trim(),
+                price: document.getElementById('pPrice').value,
+                icon: document.getElementById('pIcon').value.trim() || "🧴",
+                desc: document.getElementById('pDesc').value.trim(),
+                images: [imgData1, imgData2, imgData3]
+            };
+
+            var response = await fetch(SHEET_API_URL, {
+                method: "POST",
+                body: JSON.stringify(payload)
+            });
+
+            var resData = await response.json();
+
+            if (resData.status === "expired") {
+                lockSystem(resData.message);
+                return;
+            }
+
+            if (resData.status === "success") {
+                statusMsg.className = "status-msg status-success";
+                statusMsg.innerText = editingProductId ? "✅ تم تعديل المنتج بنجاح!" : "✅ تم إضافة المنتج بنجاح برقم: " + resData.id;
+                
+                resetFormToCreate();
+
+                setTimeout(function() {
+                    statusMsg.style.display = "none";
+                }, 3000);
+            } else {
+                throw new Error(resData.message || "حدث خطأ أثناء الحفظ");
+            }
+
+        } catch (err) {
+            statusMsg.className = "status-msg status-error";
+            statusMsg.innerText = "❌ تعذر إتمام العملية: " + err.message;
+        } finally {
+            submitBtn.disabled = false;
+        }
+    }
+</script>
+
+</body>
+</html>
