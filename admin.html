@@ -13,8 +13,8 @@
         h2 { color: #38bdf8; font-size: 18px; }
         
         /* Nav Tabs */
-        .nav-tabs { display: flex; gap: 8px; margin-bottom: 15px; background: #0f172a; padding: 5px; border-radius: 10px; }
-        .tab-btn { flex: 1; padding: 10px; background: transparent; color: #94a3b8; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 13px; transition: 0.2s; }
+        .nav-tabs { display: flex; gap: 6px; margin-bottom: 15px; background: #0f172a; padding: 5px; border-radius: 10px; }
+        .tab-btn { flex: 1; padding: 10px 5px; background: transparent; color: #94a3b8; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 12px; transition: 0.2s; text-align: center; }
         .tab-btn.active { background: #0284c7; color: #fff; }
 
         .form-group { margin-bottom: 15px; }
@@ -111,7 +111,8 @@
     <!-- الشريط العلوي للتنقل -->
     <div class="nav-tabs">
         <button class="tab-btn active" id="tabFormBtn" onclick="switchTab('form')">➕ إضافة منتج</button>
-        <button class="tab-btn" id="tabListBtn" onclick="switchTab('list')">📦 المنتجات الحالية</button>
+        <button class="tab-btn" id="tabListBtn" onclick="switchTab('list')">📦 المنتجات الظاهرة</button>
+        <button class="tab-btn" id="tabHiddenBtn" onclick="switchTab('hidden')">🙈 المنتجات المخفية</button>
         <button class="tab-btn" id="tabCouponsBtn" onclick="switchTab('coupons')">🎟️ أكواد الخصم</button>
     </div>
 
@@ -150,6 +151,12 @@
                 <textarea id="pDesc" rows="3" placeholder="اكتب تفاصيل ومميزات المنتج هنا..."></textarea>
             </div>
 
+            <!-- خيار إخفاء هذا المنتج من المتجر -->
+            <div class="form-group" style="display: flex; align-items: center; gap: 8px; background: #0f172a; padding: 10px; border-radius: 8px; border: 1px solid #334155;">
+                <input type="checkbox" id="pHidden" style="width: 18px; height: 18px; cursor: pointer;">
+                <label for="pHidden" style="margin-bottom: 0; cursor: pointer; color: #fca5a5;">🙈 إخفاء هذا المنتج من المتجر</label>
+            </div>
+
             <label>صور المنتج (اتركها كما هي في التعديل إذا لا تريد تغييرها):</label>
 
             <div class="upload-box">
@@ -184,13 +191,29 @@
         </form>
     </div>
 
-    <!-- تبويب قائمة المنتجات -->
+    <!-- تبويب قائمة المنتجات الظاهرة -->
     <div id="listTab" class="hidden">
+        <!-- شريط التحكم بحالة إخفاء جميع المنتجات -->
+        <div id="storeStatusBox" style="background: #0f172a; padding: 10px 12px; border-radius: 8px; border: 1px solid #334155; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+            <span id="storeStatusText" style="font-size: 13px; font-weight: bold; color: #4ade80;">👁️ المنتجات ظاهرة في المتجر</span>
+            <button type="button" id="toggleStoreBtn" onclick="toggleStoreVisibility()" style="background: #ef4444; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">🙈 إخفاء جميع المنتجات</button>
+        </div>
+
         <div class="form-group">
-            <input type="text" id="searchBox" placeholder="🔍 بحث عن منتج..." oninput="filterProducts()">
+            <input type="text" id="searchBox" placeholder="🔍 بحث عن منتج ظاهر..." oninput="filterProducts()">
         </div>
         <div id="productsContainer">
             <p style="text-align:center; color:#94a3b8; padding:20px;">جار تحميل المنتجات...</p>
+        </div>
+    </div>
+
+    <!-- تبويب قائمة المنتجات المخفية -->
+    <div id="hiddenTab" class="hidden">
+        <div class="form-group">
+            <input type="text" id="searchHiddenBox" placeholder="🔍 بحث عن منتج مخفي..." oninput="filterHiddenProducts()">
+        </div>
+        <div id="hiddenProductsContainer">
+            <p style="text-align:center; color:#94a3b8; padding:20px;">جار تحميل المنتجات المخفية...</p>
         </div>
     </div>
 
@@ -229,6 +252,7 @@
     var allCoupons = [];
     var editingProductId = null;
     var existingImages = ["", "", ""];
+    var isStoreHidden = false;
 
     window.onload = function() {
         checkSubscriptionStatus();
@@ -245,7 +269,6 @@
     }
 
     async function checkSubscriptionStatus() {
-        // إظهار لوحة التحكم فوراً إذا كان المستخدم مسجل الدخول لتجنب ظهور صفحة الدخول المؤقتة
         if (localStorage.getItem("admin_auth") === "true") {
             showDashboard();
         }
@@ -316,18 +339,22 @@
     function switchTab(tabName) {
         var formTab = document.getElementById("formTab");
         var listTab = document.getElementById("listTab");
+        var hiddenTab = document.getElementById("hiddenTab");
         var couponsTab = document.getElementById("couponsTab");
 
         var tabFormBtn = document.getElementById("tabFormBtn");
         var tabListBtn = document.getElementById("tabListBtn");
+        var tabHiddenBtn = document.getElementById("tabHiddenBtn");
         var tabCouponsBtn = document.getElementById("tabCouponsBtn");
 
         formTab.classList.add("hidden");
         listTab.classList.add("hidden");
+        hiddenTab.classList.add("hidden");
         couponsTab.classList.add("hidden");
 
         tabFormBtn.classList.remove("active");
         tabListBtn.classList.remove("active");
+        tabHiddenBtn.classList.remove("active");
         tabCouponsBtn.classList.remove("active");
 
         if (tabName === 'form') {
@@ -336,6 +363,10 @@
         } else if (tabName === 'list') {
             listTab.classList.remove("hidden");
             tabListBtn.classList.add("active");
+            loadProductsList();
+        } else if (tabName === 'hidden') {
+            hiddenTab.classList.remove("hidden");
+            tabHiddenBtn.classList.add("active");
             loadProductsList();
         } else if (tabName === 'coupons') {
             couponsTab.classList.remove("hidden");
@@ -346,25 +377,103 @@
 
     async function loadProductsList() {
         var container = document.getElementById("productsContainer");
-        container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px;">جار تحميل المنتجات...</p>';
+        var hiddenContainer = document.getElementById("hiddenProductsContainer");
+        if (container) container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px;">جار تحميل المنتجات...</p>';
+        if (hiddenContainer) hiddenContainer.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px;">جار تحميل المنتجات المخفية...</p>';
+
         try {
-            var res = await fetch(SHEET_API_URL);
+            var res = await fetch(SHEET_API_URL + "?action=getAdminProducts");
             var resData = await res.json();
             if (resData && resData.status === "expired") {
                 lockSystem(resData.message);
                 return;
             }
             allProducts = resData;
-            renderProducts(allProducts);
+            
+            // تصفية المنتجات حسب الحالة
+            renderProducts(allProducts.filter(p => !p.hidden));
+            renderHiddenProducts(allProducts.filter(p => p.hidden));
+
+            fetchStoreStatus();
         } catch (err) {
-            container.innerHTML = '<p style="text-align:center; color:#ef4444; padding:20px;">فشل في جلب المنتجات</p>';
+            if (container) container.innerHTML = '<p style="text-align:center; color:#ef4444; padding:20px;">فشل في جلب المنتجات</p>';
+            if (hiddenContainer) hiddenContainer.innerHTML = '<p style="text-align:center; color:#ef4444; padding:20px;">فشل في جلب المنتجات المخفية</p>';
+        }
+    }
+
+    async function fetchStoreStatus() {
+        try {
+            var res = await fetch(SHEET_API_URL + "?action=getSettings");
+            var data = await res.json();
+            isStoreHidden = !!data.hideAllStore;
+            updateStoreStatusUI();
+        } catch (e) {}
+    }
+
+    function updateStoreStatusUI() {
+        var statusText = document.getElementById("storeStatusText");
+        var toggleBtn = document.getElementById("toggleStoreBtn");
+        if (!statusText || !toggleBtn) return;
+
+        if (isStoreHidden) {
+            statusText.innerText = "🙈 جميع المنتجات مخفية حالياً من المتجر";
+            statusText.style.color = "#fca5a5";
+            toggleBtn.innerText = "👁️ إظهار جميع المنتجات";
+            toggleBtn.style.background = "#22c55e";
+        } else {
+            statusText.innerText = "👁️ المنتجات ظاهرة في المتجر";
+            statusText.style.color = "#4ade80";
+            toggleBtn.innerText = "🙈 إخفاء جميع المنتجات";
+            toggleBtn.style.background = "#ef4444";
+        }
+    }
+
+    async function toggleStoreVisibility() {
+        var statusMsg = document.getElementById('productStatus');
+        var newStatus = !isStoreHidden;
+
+        var confirmText = newStatus 
+            ? "هل أنت متأكد من إخفاء جميع المنتجات من المتجر؟" 
+            : "هل أنت متأكد من إظهار المنتجات في المتجر؟";
+
+        if (!confirm(confirmText)) return;
+
+        statusMsg.className = "status-msg status-loading";
+        statusMsg.style.display = "block";
+        statusMsg.innerText = "جار تحديث حالة المتجر...";
+
+        try {
+            var response = await fetch(SHEET_API_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "toggleHideStore", hideAllStore: newStatus })
+            });
+
+            var resData = await response.json();
+
+            if (resData.status === "success") {
+                isStoreHidden = newStatus;
+                updateStoreStatusUI();
+                statusMsg.className = "status-msg status-success";
+                statusMsg.innerText = newStatus 
+                    ? "✅ تم إخفاء جميع المنتجات من المتجر" 
+                    : "✅ تم إظهار المنتجات في المتجر بنجاح";
+
+                setTimeout(function() {
+                    statusMsg.style.display = "none";
+                }, 3000);
+            } else {
+                throw new Error(resData.message || "فشل التحديث");
+            }
+        } catch (err) {
+            statusMsg.className = "status-msg status-error";
+            statusMsg.innerText = "❌ تعذر إتمام العملية: " + err.message;
         }
     }
 
     function renderProducts(products) {
         var container = document.getElementById("productsContainer");
         if (!products || !Array.isArray(products) || products.length === 0) {
-            container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px;">لا يوجد منتجات حالياً</p>';
+            container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px;">لا توجد منتجات ظاهرة حالياً</p>';
             return;
         }
 
@@ -388,14 +497,52 @@
         container.innerHTML = html;
     }
 
+    function renderHiddenProducts(products) {
+        var container = document.getElementById("hiddenProductsContainer");
+        if (!container) return;
+        if (!products || !Array.isArray(products) || products.length === 0) {
+            container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px;">لا توجد منتجات مخفية حالياً 🙈</p>';
+            return;
+        }
+
+        var html = "";
+        products.forEach(function(p) {
+            var mainImg = p.image || "https://via.placeholder.com/50?text=No+Img";
+            html += `
+                <div class="product-item" style="border-color: #7f1d1d; background: #1e1b2e;">
+                    <img src="${mainImg}" alt="${p.name}">
+                    <div class="product-info">
+                        <h4>${p.icon || '🧴'} ${p.name} <span style="color:#fca5a5; background:#7f1d1d; padding:2px 6px; border-radius:4px; font-size:10px; margin-right:6px;">🙈 مخفي</span></h4>
+                        <p>${Number(p.price).toLocaleString()} د.ع | ${p.category}</p>
+                    </div>
+                    <div class="product-actions">
+                        <button class="btn-action btn-edit" onclick="startEditProduct('${p.id}')">✏ تعديل</button>
+                        <button class="btn-action btn-delete" onclick="deleteProduct('${p.id}', '${p.name}')">🗑️ حذف</button>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
     function filterProducts() {
         var q = document.getElementById("searchBox").value.toLowerCase();
-        var filtered = allProducts.filter(p => 
+        var filtered = allProducts.filter(p => !p.hidden && (
             p.name.toLowerCase().includes(q) || 
             p.category.toLowerCase().includes(q) || 
             p.brand.toLowerCase().includes(q)
-        );
+        ));
         renderProducts(filtered);
+    }
+
+    function filterHiddenProducts() {
+        var q = document.getElementById("searchHiddenBox").value.toLowerCase();
+        var filtered = allProducts.filter(p => p.hidden && (
+            p.name.toLowerCase().includes(q) || 
+            p.category.toLowerCase().includes(q) || 
+            p.brand.toLowerCase().includes(q)
+        ));
+        renderHiddenProducts(filtered);
     }
 
     /* --- إدارة أكواد الخصم --- */
@@ -537,6 +684,7 @@
         document.getElementById("pPrice").value = p.price;
         document.getElementById("pIcon").value = p.icon;
         document.getElementById("pDesc").value = p.desc || "";
+        document.getElementById("pHidden").checked = !!p.hidden;
 
         existingImages = [
             (p.rawImages && p.rawImages[0]) ? p.rawImages[0] : (p.images && p.images[0] ? p.images[0] : ""),
@@ -583,6 +731,7 @@
         editingProductId = null;
         existingImages = ["", "", ""];
         document.getElementById("productForm").reset();
+        document.getElementById("pHidden").checked = false;
 
         setPreview('prev1', 'removeBtn1', '');
         setPreview('prev2', 'removeBtn2', '');
@@ -716,6 +865,7 @@
                 price: document.getElementById('pPrice').value,
                 icon: document.getElementById('pIcon').value.trim() || "🧴",
                 desc: document.getElementById('pDesc').value.trim(),
+                hidden: document.getElementById('pHidden').checked,
                 images: [imgData1, imgData2, imgData3]
             };
 
@@ -736,6 +886,7 @@
                 statusMsg.innerText = editingProductId ? "✅ تم تعديل المنتج بنجاح!" : "✅ تم إضافة المنتج بنجاح برقم: " + resData.id;
                 
                 resetFormToCreate();
+                loadProductsList();
 
                 setTimeout(function() {
                     statusMsg.style.display = "none";
