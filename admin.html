@@ -266,6 +266,9 @@
         }
         document.getElementById("expiredCard").classList.remove("hidden");
         localStorage.removeItem("admin_auth");
+        localStorage.removeItem("cached_products");
+        localStorage.removeItem("cached_coupons");
+        localStorage.removeItem("cached_hide_all_store");
     }
 
     async function checkSubscriptionStatus() {
@@ -333,6 +336,9 @@
     function logout() {
         if (!confirm("هل انت متأكد من تسجيل الخروج")) return;
         localStorage.removeItem("admin_auth");
+        localStorage.removeItem("cached_products");
+        localStorage.removeItem("cached_coupons");
+        localStorage.removeItem("cached_hide_all_store");
         location.reload();
     }
 
@@ -378,9 +384,21 @@
     async function loadProductsList() {
         var container = document.getElementById("productsContainer");
         var hiddenContainer = document.getElementById("hiddenProductsContainer");
-        if (container) container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px;">جار تحميل المنتجات...</p>';
-        if (hiddenContainer) hiddenContainer.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px;">جار تحميل المنتجات المخفية...</p>';
 
+        // 1. عرض البيانات المخزنة مؤقتاً فوراً لمنع الانتظار
+        var cachedProducts = localStorage.getItem("cached_products");
+        if (cachedProducts) {
+            try {
+                allProducts = JSON.parse(cachedProducts);
+                renderProducts(allProducts.filter(p => !p.hidden));
+                renderHiddenProducts(allProducts.filter(p => p.hidden));
+            } catch (e) {}
+        } else {
+            if (container) container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px;">جار تحميل المنتجات...</p>';
+            if (hiddenContainer) hiddenContainer.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px;">جار تحميل المنتجات المخفية...</p>';
+        }
+
+        // 2. تحديث البيانات من السيرفر في الخلفية
         try {
             var res = await fetch(SHEET_API_URL + "?action=getAdminProducts");
             var resData = await res.json();
@@ -389,23 +407,33 @@
                 return;
             }
             allProducts = resData;
+            localStorage.setItem("cached_products", JSON.stringify(allProducts));
             
-            // تصفية المنتجات حسب الحالة
+            // تصفية المنتجات ورسمها ببيانات السيرفر الحديثة
             renderProducts(allProducts.filter(p => !p.hidden));
             renderHiddenProducts(allProducts.filter(p => p.hidden));
 
             fetchStoreStatus();
         } catch (err) {
-            if (container) container.innerHTML = '<p style="text-align:center; color:#ef4444; padding:20px;">فشل في جلب المنتجات</p>';
-            if (hiddenContainer) hiddenContainer.innerHTML = '<p style="text-align:center; color:#ef4444; padding:20px;">فشل في جلب المنتجات المخفية</p>';
+            if (!cachedProducts) {
+                if (container) container.innerHTML = '<p style="text-align:center; color:#ef4444; padding:20px;">فشل في جلب المنتجات</p>';
+                if (hiddenContainer) hiddenContainer.innerHTML = '<p style="text-align:center; color:#ef4444; padding:20px;">فشل في جلب المنتجات المخفية</p>';
+            }
         }
     }
 
     async function fetchStoreStatus() {
+        var cachedStatus = localStorage.getItem("cached_hide_all_store");
+        if (cachedStatus !== null) {
+            isStoreHidden = (cachedStatus === "true");
+            updateStoreStatusUI();
+        }
+
         try {
             var res = await fetch(SHEET_API_URL + "?action=getSettings");
             var data = await res.json();
             isStoreHidden = !!data.hideAllStore;
+            localStorage.setItem("cached_hide_all_store", isStoreHidden ? "true" : "false");
             updateStoreStatusUI();
         } catch (e) {}
     }
@@ -452,6 +480,7 @@
 
             if (resData.status === "success") {
                 isStoreHidden = newStatus;
+                localStorage.setItem("cached_hide_all_store", newStatus ? "true" : "false");
                 updateStoreStatusUI();
                 statusMsg.className = "status-msg status-success";
                 statusMsg.innerText = newStatus 
@@ -548,7 +577,19 @@
     /* --- إدارة أكواد الخصم --- */
     async function loadCouponsList() {
         var container = document.getElementById("couponsListContainer");
-        container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px;">جار تحميل أكواد الخصم...</p>';
+        
+        // 1. عرض البيانات المخزنة مؤقتاً فوراً
+        var cachedCoupons = localStorage.getItem("cached_coupons");
+        if (cachedCoupons) {
+            try {
+                allCoupons = JSON.parse(cachedCoupons);
+                renderCoupons(allCoupons);
+            } catch (e) {}
+        } else {
+            if (container) container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px;">جار تحميل أكواد الخصم...</p>';
+        }
+
+        // 2. التحديث من السيرفر
         try {
             var res = await fetch(SHEET_API_URL + "?action=getCoupons");
             var resData = await res.json();
@@ -557,9 +598,12 @@
                 return;
             }
             allCoupons = resData;
+            localStorage.setItem("cached_coupons", JSON.stringify(allCoupons));
             renderCoupons(allCoupons);
         } catch (err) {
-            container.innerHTML = '<p style="text-align:center; color:#ef4444; padding:20px;">فشل في جلب أكواد الخصم</p>';
+            if (!cachedCoupons) {
+                if (container) container.innerHTML = '<p style="text-align:center; color:#ef4444; padding:20px;">فشل في جلب أكواد الخصم</p>';
+            }
         }
     }
 
