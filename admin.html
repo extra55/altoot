@@ -385,21 +385,30 @@
         var container = document.getElementById("productsContainer");
         var hiddenContainer = document.getElementById("hiddenProductsContainer");
 
+        // جلب حالة إخفاء المتجر المخزنة كاش
+        var cachedStatus = localStorage.getItem("cached_hide_all_store");
+        if (cachedStatus !== null) {
+            isStoreHidden = (cachedStatus === "true");
+            updateStoreStatusUI();
+        }
+
         // 1. عرض البيانات المخزنة مؤقتاً فوراً لمنع الانتظار
         var cachedProducts = localStorage.getItem("cached_products");
         if (cachedProducts) {
             try {
                 allProducts = JSON.parse(cachedProducts);
-                renderProducts(allProducts.filter(p => !p.hidden));
-                renderHiddenProducts(allProducts.filter(p => p.hidden));
+                renderProducts(allProducts.filter(p => !p.hidden && !isStoreHidden));
+                renderHiddenProducts(allProducts.filter(p => p.hidden || isStoreHidden));
             } catch (e) {}
         } else {
             if (container) container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px;">جار تحميل المنتجات...</p>';
             if (hiddenContainer) hiddenContainer.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px;">جار تحميل المنتجات المخفية...</p>';
         }
 
-        // 2. تحديث البيانات من السيرفر في الخلفية
+        // 2. تحديث البيانات وحالة المتجر من السيرفر في الخلفية
         try {
+            await fetchStoreStatus();
+
             var res = await fetch(SHEET_API_URL + "?action=getAdminProducts");
             var resData = await res.json();
             if (resData && resData.status === "expired") {
@@ -409,11 +418,9 @@
             allProducts = resData;
             localStorage.setItem("cached_products", JSON.stringify(allProducts));
             
-            // تصفية المنتجات ورسمها ببيانات السيرفر الحديثة
-            renderProducts(allProducts.filter(p => !p.hidden));
-            renderHiddenProducts(allProducts.filter(p => p.hidden));
-
-            fetchStoreStatus();
+            // تصفية المنتجات ورسمها ببيانات السيرفر الحديثة (مع مراعاة حالة إخفاء جميع المنتجات)
+            renderProducts(allProducts.filter(p => !p.hidden && !isStoreHidden));
+            renderHiddenProducts(allProducts.filter(p => p.hidden || isStoreHidden));
         } catch (err) {
             if (!cachedProducts) {
                 if (container) container.innerHTML = '<p style="text-align:center; color:#ef4444; padding:20px;">فشل في جلب المنتجات</p>';
@@ -482,6 +489,11 @@
                 isStoreHidden = newStatus;
                 localStorage.setItem("cached_hide_all_store", newStatus ? "true" : "false");
                 updateStoreStatusUI();
+
+                // تحديث واجهات القوائم فوراً بنقل المنتجات إلى قائمة المخفية أو العكس
+                renderProducts(allProducts.filter(p => !p.hidden && !isStoreHidden));
+                renderHiddenProducts(allProducts.filter(p => p.hidden || isStoreHidden));
+
                 statusMsg.className = "status-msg status-success";
                 statusMsg.innerText = newStatus 
                     ? "✅ تم إخفاء جميع المنتجات من المتجر" 
@@ -537,11 +549,15 @@
         var html = "";
         products.forEach(function(p) {
             var mainImg = p.image || "https://via.placeholder.com/50?text=No+Img";
+            var hiddenBadge = p.hidden 
+                ? '<span style="color:#fca5a5; background:#7f1d1d; padding:2px 6px; border-radius:4px; font-size:10px; margin-right:6px;">🙈 مخفي</span>'
+                : '<span style="color:#fca5a5; background:#7f1d1d; padding:2px 6px; border-radius:4px; font-size:10px; margin-right:6px;">🙈 إخفاء المتجر</span>';
+
             html += `
                 <div class="product-item" style="border-color: #7f1d1d; background: #1e1b2e;">
                     <img src="${mainImg}" alt="${p.name}">
                     <div class="product-info">
-                        <h4>${p.icon || '🧴'} ${p.name} <span style="color:#fca5a5; background:#7f1d1d; padding:2px 6px; border-radius:4px; font-size:10px; margin-right:6px;">🙈 مخفي</span></h4>
+                        <h4>${p.icon || '🧴'} ${p.name} ${hiddenBadge}</h4>
                         <p>${Number(p.price).toLocaleString()} د.ع | ${p.category}</p>
                     </div>
                     <div class="product-actions">
@@ -556,7 +572,7 @@
 
     function filterProducts() {
         var q = document.getElementById("searchBox").value.toLowerCase();
-        var filtered = allProducts.filter(p => !p.hidden && (
+        var filtered = allProducts.filter(p => (!p.hidden && !isStoreHidden) && (
             p.name.toLowerCase().includes(q) || 
             p.category.toLowerCase().includes(q) || 
             p.brand.toLowerCase().includes(q)
@@ -566,7 +582,7 @@
 
     function filterHiddenProducts() {
         var q = document.getElementById("searchHiddenBox").value.toLowerCase();
-        var filtered = allProducts.filter(p => p.hidden && (
+        var filtered = allProducts.filter(p => (p.hidden || isStoreHidden) && (
             p.name.toLowerCase().includes(q) || 
             p.category.toLowerCase().includes(q) || 
             p.brand.toLowerCase().includes(q)
