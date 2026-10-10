@@ -152,12 +152,18 @@
             </div>
 
             <!-- خيار إخفاء هذا المنتج من المتجر -->
-            <div class="form-group" style="display: flex; align-items: center; gap: 8px; background: #0f172a; padding: 10px; border-radius: 8px; border: 1px solid #334155;">
+            <div class="form-group" style="display: flex; align-items: center; gap: 8px; background: #0f172a; padding: 10px; border-radius: 8px; border: 1px solid #334155; margin-bottom: 10px;">
                 <input type="checkbox" id="pHidden" style="width: 18px; height: 18px; cursor: pointer;">
                 <label for="pHidden" style="margin-bottom: 0; cursor: pointer; color: #fca5a5;">🙈 إخفاء هذا المنتج من المتجر</label>
             </div>
 
-            <label>صور المنتج (اتركها كما هي في التعديل إذا لا تريد تغييرها):</label>
+            <!-- خيار تثبيت المنتج في الصفحة الرئيسية -->
+            <div class="form-group" style="display: flex; align-items: center; gap: 8px; background: #0f172a; padding: 10px; border-radius: 8px; border: 1px solid #334155;">
+                <input type="checkbox" id="pPinned" style="width: 18px; height: 18px; cursor: pointer;">
+                <label for="pPinned" style="margin-bottom: 0; cursor: pointer; color: #38bdf8;">📌 تثبيت المنتج في أعلى الصفحة الرئيسية</label>
+            </div>
+
+            <label>صور المنتج:</label>
 
             <div class="upload-box">
                 <span style="font-size:12px; color:#cbd5e1;">الصورة الرئيسية (G) *</span><br>
@@ -518,14 +524,23 @@
             return;
         }
 
+        // ترتيب المنتجات المثبتة لتكون في الأعلى دائماً
+        products.sort(function(a, b) {
+            var pinnedA = (a.pinned === true || a.pinned === "TRUE" || a.pinned === "true" || a.pinned === 1) ? 1 : 0;
+            var pinnedB = (b.pinned === true || b.pinned === "TRUE" || b.pinned === "true" || b.pinned === 1) ? 1 : 0;
+            return pinnedB - pinnedA;
+        });
+
         var html = "";
         products.forEach(function(p) {
             var mainImg = p.image || "https://via.placeholder.com/50?text=No+Img";
+            var isPinned = (p.pinned === true || p.pinned === "TRUE" || p.pinned === "true" || p.pinned === 1);
+            var pinnedBadge = isPinned ? '<span style="color:#38bdf8; background:#0369a1; padding:2px 6px; border-radius:4px; font-size:10px; margin-right:6px;">📌 مثبت</span>' : '';
             html += `
                 <div class="product-item">
                     <img src="${mainImg}" alt="${p.name}">
                     <div class="product-info">
-                        <h4>${p.icon || '🧴'} ${p.name}</h4>
+                        <h4>${p.icon || '🧴'} ${p.name} ${pinnedBadge}</h4>
                         <p>${Number(p.price).toLocaleString()} د.ع | ${p.category}</p>
                     </div>
                     <div class="product-actions">
@@ -546,18 +561,27 @@
             return;
         }
 
+        // ترتيب المنتجات المثبتة لتكون في الأعلى دائماً
+        products.sort(function(a, b) {
+            var pinnedA = (a.pinned === true || a.pinned === "TRUE" || a.pinned === "true" || a.pinned === 1) ? 1 : 0;
+            var pinnedB = (b.pinned === true || b.pinned === "TRUE" || b.pinned === "true" || b.pinned === 1) ? 1 : 0;
+            return pinnedB - pinnedA;
+        });
+
         var html = "";
         products.forEach(function(p) {
             var mainImg = p.image || "https://via.placeholder.com/50?text=No+Img";
             var hiddenBadge = p.hidden 
                 ? '<span style="color:#fca5a5; background:#7f1d1d; padding:2px 6px; border-radius:4px; font-size:10px; margin-right:6px;">🙈 مخفي</span>'
                 : '<span style="color:#fca5a5; background:#7f1d1d; padding:2px 6px; border-radius:4px; font-size:10px; margin-right:6px;">🙈 إخفاء المتجر</span>';
+            var isPinned = (p.pinned === true || p.pinned === "TRUE" || p.pinned === "true" || p.pinned === 1);
+            var pinnedBadge = isPinned ? '<span style="color:#38bdf8; background:#0369a1; padding:2px 6px; border-radius:4px; font-size:10px; margin-right:6px;">📌 مثبت</span>' : '';
 
             html += `
                 <div class="product-item" style="border-color: #7f1d1d; background: #1e1b2e;">
                     <img src="${mainImg}" alt="${p.name}">
                     <div class="product-info">
-                        <h4>${p.icon || '🧴'} ${p.name} ${hiddenBadge}</h4>
+                        <h4>${p.icon || '🧴'} ${p.name} ${hiddenBadge} ${pinnedBadge}</h4>
                         <p>${Number(p.price).toLocaleString()} د.ع | ${p.category}</p>
                     </div>
                     <div class="product-actions">
@@ -745,6 +769,7 @@
         document.getElementById("pIcon").value = p.icon;
         document.getElementById("pDesc").value = p.desc || "";
         document.getElementById("pHidden").checked = !!p.hidden;
+        document.getElementById("pPinned").checked = (p.pinned === true || p.pinned === "TRUE" || p.pinned === "true" || p.pinned === 1);
 
         existingImages = [
             (p.rawImages && p.rawImages[0]) ? p.rawImages[0] : (p.images && p.images[0] ? p.images[0] : ""),
@@ -792,6 +817,7 @@
         existingImages = ["", "", ""];
         document.getElementById("productForm").reset();
         document.getElementById("pHidden").checked = false;
+        document.getElementById("pPinned").checked = false;
 
         setPreview('prev1', 'removeBtn1', '');
         setPreview('prev2', 'removeBtn2', '');
@@ -926,6 +952,7 @@
                 icon: document.getElementById('pIcon').value.trim() || "🧴",
                 desc: document.getElementById('pDesc').value.trim(),
                 hidden: document.getElementById('pHidden').checked,
+                pinned: document.getElementById('pPinned').checked,
                 images: [imgData1, imgData2, imgData3]
             };
 
