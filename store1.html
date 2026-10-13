@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>متجر كوزمتك</title>
+    <title>متجر كوزمتك الرقمي</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap');
 
@@ -38,16 +38,16 @@
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
-            padding: 14px 18px; 
+            padding: 12px 16px; 
             background: #ffffff; 
             border-radius: 14px; 
-            margin-bottom: 12px; 
+            margin-bottom: 10px; 
             border: 1px solid #e2e8f0; 
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
         }
         .header h1 { 
             color: #0f172a;
-            font-size: 18px; 
+            font-size: 17px; 
             font-weight: 800;
             letter-spacing: -0.3px;
             margin-bottom: 2px; 
@@ -61,7 +61,7 @@
             background: #0f172a; 
             color: white; 
             border: none; 
-            padding: 8px 14px; 
+            padding: 8px 12px; 
             border-radius: 10px; 
             cursor: pointer; 
             font-weight: 600; 
@@ -85,14 +85,14 @@
 
         /* حقل البحث عن منتج */
         .search-container { 
-            margin-bottom: 12px; 
+            margin-bottom: 10px; 
             position: relative; 
             display: flex; 
             align-items: center; 
         }
         .search-input { 
             width: 100%; 
-            padding: 12px 16px; 
+            padding: 11px 16px; 
             padding-left: 40px; 
             border-radius: 12px; 
             border: 1px solid #cbd5e1; 
@@ -127,14 +127,14 @@
             gap: 8px; 
             overflow-x: auto; 
             padding-bottom: 6px; 
-            margin-bottom: 14px; 
+            margin-bottom: 12px; 
             scrollbar-width: none; 
         }
         .categories-bar::-webkit-scrollbar { display: none; }
         .category-tab { 
             background: #ffffff; 
             color: #475569; 
-            padding: 7px 16px; 
+            padding: 6px 14px; 
             border-radius: 20px; 
             font-size: 12px; 
             font-weight: 600;
@@ -162,8 +162,8 @@
         
         .products-grid-view {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            gap: 12px;
+            grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
+            gap: 8px;
         }
 
         @media (min-width: 768px) {
@@ -176,8 +176,8 @@
         /* كروت المنتجات */
         .product-card { 
             background: #ffffff; 
-            border-radius: 14px; 
-            padding: 10px; 
+            border-radius: 12px; 
+            padding: 8px; 
             display: flex; 
             flex-direction: column; 
             justify-content: space-between; 
@@ -186,7 +186,7 @@
             position: relative; 
             transition: all 0.25s ease;
             overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
         }
         .product-card:hover {
             transform: translateY(-3px);
@@ -195,15 +195,15 @@
         }
         .img-box { 
             width: 100%; 
-            height: 150px; 
-            border-radius: 10px; 
+            height: 120px; 
+            border-radius: 8px; 
             background: #f8fafc; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
-            font-size: 36px; 
+            font-size: 30px; 
             overflow: hidden; 
-            margin-bottom: 10px; 
+            margin-bottom: 8px; 
             position: relative;
             border: 1px solid #f1f5f9;
         }
@@ -211,7 +211,7 @@
             width: 100%; 
             height: 100%; 
             object-fit: cover; 
-            border-radius: 10px; 
+            border-radius: 8px; 
             transition: transform 0.3s ease;
         }
         .product-card:hover .img-box img {
@@ -220,39 +220,38 @@
 
         .product-details { 
             flex: 1; 
-            margin-bottom: 8px; 
+            margin-bottom: 6px; 
             display: flex;
             flex-direction: column;
         }
-        /* تم جعل الماركة أكثر وضوحاً בלون مميز وإطار وتصميم واضح */
         .brand-tag { 
-            font-size: 11px; 
+            font-size: 10px; 
             background: #e0f2fe; 
             color: #0369a1; 
-            padding: 3px 9px; 
-            border-radius: 6px; 
+            padding: 2px 6px; 
+            border-radius: 4px; 
             display: inline-block; 
-            margin-bottom: 4px; 
+            margin-bottom: 3px; 
             font-weight: 700;
             width: fit-content;
             border: 1px solid #bae6fd;
         }
         .product-title { 
-            font-size: 13px; 
+            font-size: 12px; 
             color: #1e293b; 
             font-weight: 600; 
-            line-height: 1.4; 
+            line-height: 1.3; 
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
-            height: 36px;
+            height: 32px;
         }
         .product-price { 
-            font-size: 14px; 
+            font-size: 13px; 
             color: #0f172a; 
             font-weight: 800; 
-            margin-top: 6px; 
+            margin-top: 4px; 
         }
 
         /* أزرار التحكم بالكمية (+ و -) */
@@ -260,18 +259,18 @@
             display: flex; 
             align-items: center; 
             justify-content: space-between; 
-            gap: 6px; 
+            gap: 4px; 
             background: #f8fafc; 
-            padding: 4px; 
-            border-radius: 10px; 
+            padding: 3px; 
+            border-radius: 8px; 
             border: 1px solid #e2e8f0; 
         }
         .btn-qty { 
-            height: 32px; 
-            border-radius: 8px; 
+            height: 28px; 
+            border-radius: 6px; 
             border: none; 
             font-weight: 600; 
-            font-size: 14px; 
+            font-size: 13px; 
             cursor: pointer; 
             display: flex; 
             align-items: center; 
@@ -284,18 +283,19 @@
             color: white; 
             width: 100%; 
             box-shadow: 0 2px 6px rgba(15, 23, 42, 0.2);
+            font-size: 11px;
         }
         .btn-plus:hover { background: #1e293b; }
         .btn-minus { 
             background: #ef4444; 
             color: white; 
-            width: 32px;
+            width: 28px;
             box-shadow: 0 2px 6px rgba(239, 68, 68, 0.2);
         }
         .qty-number { 
-            font-size: 13px; 
+            font-size: 12px; 
             font-weight: 700; 
-            min-width: 22px; 
+            min-width: 18px; 
             text-align: center; 
             color: #0f172a; 
         }
@@ -391,7 +391,7 @@
         .detail-desc-box h3 { color: #0f172a; font-size: 14px; margin-bottom: 6px; font-weight: 700; }
         .detail-desc-box p { white-space: pre-line; color: #64748b; }
 
-        /* صفحة السلة وزر الرجوع (تم تحديثه ليكون باللون الماروني وبكتابة بيضاء واضحة) */
+        /* صفحة السلة وزر الرجوع */
         .cart-header { 
             display: flex; 
             justify-content: space-between; 
@@ -509,24 +509,31 @@
 
 <!-- ================= صفحة المنتجات الرئيسية ================= -->
 <div id="shopPage" class="page">
-    <div class="header">
-        <div>
-            <h1>متجر كوزمتك</h1>
-            <p>أفضل المنتجات الأصلية والعالمية</p>
+    
+    <!-- قسم الهيدر والبحث والأقسام المثبت في الأعلى -->
+    <div style="position: sticky; top: 0; background: #f8fafc; z-index: 1000; padding-top: 2px; margin: -12px -12px 10px -12px; padding-left: 12px; padding-right: 12px;">
+        <div class="header">
+            <div style="flex: 1; min-width: 0; margin-left: 12px;">
+                <h1>متجر كوزمتك</h1>
+                <p>أفضل المنتجات الأصلية والعالمية</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                <button onclick="toggleSearchBox()" style="background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; width: 38px; height: 38px; border-radius: 10px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0,0,0,0.05); transition: all 0.2s;" title="بحث">🔍</button>
+                <button class="cart-icon-btn" onclick="openCartPage()">
+                    🛒 السلة <span class="cart-badge" id="cartBadgeCount">0</span>
+                </button>
+            </div>
         </div>
-        <button class="cart-icon-btn" onclick="openCartPage()">
-            🛒 السلة <span class="cart-badge" id="cartBadgeCount">0</span>
-        </button>
-    </div>
 
-    <!-- حقل البحث عن منتج -->
-    <div class="search-container">
-        <input type="text" id="searchInput" class="search-input" placeholder="🔍 ابحث عن منتج أو ماركة..." oninput="onSearchInput()">
-        <span id="clearSearchBtn" class="clear-search-btn" onclick="clearSearch()">✕</span>
-    </div>
+        <!-- حقل البحث عن منتج (مخفي افتراضياً ويفتح عند الضغط على أيقونة البحث) -->
+        <div id="searchContainerBox" class="search-container hidden">
+            <input type="text" id="searchInput" class="search-input" placeholder="🔍 ابحث عن منتج أو ماركة..." oninput="onSearchInput()">
+            <span id="clearSearchBtn" class="clear-search-btn" onclick="clearSearch()">✕</span>
+        </div>
 
-    <!-- قائمة الأقسام بالعرض العلوي -->
-    <div class="categories-bar" id="categoriesBar"></div>
+        <!-- قائمة الأقسام بالعرض العلوي -->
+        <div class="categories-bar" id="categoriesBar"></div>
+    </div>
 
     <!-- شبكة/أقسام عرض المنتجات -->
     <div id="productsGrid"></div>
@@ -603,6 +610,45 @@
 
     var appliedCoupon = null;
     var allCoupons = [];
+    var searchTimeout = null;
+
+    // --- تعطيل زر الماوس الأيمن لحماية الكود ---
+    document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+    });
+
+    // --- دالة إظهار وإخفاء حقل البحث عبر الأيقونة (مع المؤقت) ---
+    function toggleSearchBox() {
+        var box = document.getElementById('searchContainerBox');
+        if (box.classList.contains('hidden')) {
+            box.classList.remove('hidden');
+            document.getElementById('searchInput').focus();
+            resetSearchTimer();
+        } else {
+            hideSearchBox();
+        }
+    }
+
+    function hideSearchBox() {
+        var box = document.getElementById('searchContainerBox');
+        if (box) box.classList.add('hidden');
+        if (searchTimeout) clearTimeout(searchTimeout);
+        var input = document.getElementById('searchInput');
+        if (input && input.value === "") {
+            searchQuery = "";
+            renderProducts();
+        }
+    }
+
+    function resetSearchTimer() {
+        if (searchTimeout) clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(function() {
+            var input = document.getElementById('searchInput');
+            if (input && input.value.trim() === "") {
+                hideSearchBox();
+            }
+        }, 5000);
+    }
 
     // --- دوال حفظ واسترجاع السلة من الذاكرة المحلية ---
     function saveCartToStorage() {
@@ -629,7 +675,6 @@
             .then(function(data) {
                 products = data;
                 
-                // جلب الأقسام المرتبة من السيرفر وإضافة قسم المنتجات المميزة
                 fetch(SHEET_API_URL + "?action=getCategories")
                     .then(function(res) { return res.json(); })
                     .then(function(catData) {
@@ -731,6 +776,7 @@
     }
 
     function onSearchInput() {
+        resetSearchTimer();
         var input = document.getElementById('searchInput');
         searchQuery = input.value.trim().toLowerCase();
         
@@ -749,20 +795,16 @@
         input.focus();
     }
 
-    // دالة عرض المنتجات: تعرض كأقسام أفقيّة بالصفحة الرئيسية، أو شبكة منتجات عند البحث أو اختيار قسم محدد
     function renderProducts() {
         var container = document.getElementById('productsGrid');
 
-        // إذا كان هناك بحث نشط أو تم اختيار قسم معين (بما فيها المنتجات المميزة)، اعرض شبكة المنتجات العادية
         if (searchQuery !== "" || activeCategory !== "الرئيسية") {
             renderStandardGrid();
             return;
         }
 
-        // الصفحة الرئيسية: عرض الأقسام بشكل مرّتب
         var html = "";
 
-        // 1. قسم "المنتجات المميزة" يوضع كأول قسم في الصفحة مع تمرير فئة "المنتجات المميزة" ليعمل زر عرض المزيد بشكل صحيح
         var featuredProducts = products.filter(function(p) {
             return p.pinned === true || p.pinned === "TRUE" || p.pinned === "true" || p.pinned === 1;
         });
@@ -771,7 +813,6 @@
             html += createCategorySection("⭐ المنتجات المميزة", featuredProducts, "المنتجات المميزة");
         }
 
-        // 2. بقية الأقسام المتاحة
         for (var i = 0; i < categories.length; i++) {
             var cat = categories[i];
             if (cat === "الرئيسية" || cat === "المنتجات المميزة") continue;
@@ -790,14 +831,13 @@
         updateBadge();
     }
 
-    // بناء سطر أفقي لكل قسم مع زر "عرض المزيد" على اليسار
     function createCategorySection(title, prodList, categoryName) {
-        var sectionHtml = '<div style="margin-bottom: 22px;">' +
-            '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 0 4px;">' +
-                '<h3 style="font-size: 15px; font-weight: 800; color: #0f172a;">' + title + '</h3>' +
-                '<span onclick="selectCategory(\'' + categoryName + '\')" style="font-size: 12px; font-weight: 700; color: #2563eb; cursor: pointer;">عرض المزيد ❯</span>' +
+        var sectionHtml = '<div style="margin-bottom: 34px;">' +
+            '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 0 4px;">' +
+                '<h3 style="font-size: 16px; font-weight: 800; color: #0f172a;">' + title + '</h3>' +
+                '<span onclick="selectCategory(\'' + categoryName + '\')" style="font-size: 14px; font-weight: 700; color: #2563eb; cursor: pointer;">عرض المزيد ❯</span>' +
             '</div>' +
-            '<div style="display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none;">';
+            '<div style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none;">';
 
         for (var i = 0; i < prodList.length; i++) {
             var p = prodList[i];
@@ -807,8 +847,8 @@
                 ? '<img src="' + cardImage + '" alt="' + p.name + '" onerror="this.onerror=null; this.parentNode.innerHTML=\'' + p.icon + '\';">'
                 : p.icon;
 
-            sectionHtml += '<div class="product-card" style="flex: 0 0 160px; min-width: 160px;" onclick="openProductDetail(' + p.id + ')">' +
-                '<div class="img-box">' + imageContent + '</div>' +
+            sectionHtml += '<div class="product-card" style="flex: 0 0 130px; min-width: 130px;" onclick="openProductDetail(' + p.id + ')">' +
+                '<div class="img-box" style="height: 100px;">' + imageContent + '</div>' +
                 '<div class="product-details">' +
                     '<span class="brand-tag">' + p.brand + '</span>' +
                     '<div class="product-title">' + p.name + '</div>' +
@@ -819,9 +859,9 @@
             if (qty > 0) {
                 sectionHtml += '<button class="btn-qty btn-minus" onclick="changeQty(' + p.id + ', -1)">-</button>' +
                         '<span class="qty-number">' + qty + '</span>' +
-                        '<button class="btn-qty btn-plus" style="width:30px;" onclick="changeQty(' + p.id + ', 1)">+</button>';
+                        '<button class="btn-qty btn-plus" style="width:26px;" onclick="changeQty(' + p.id + ', 1)">+</button>';
             } else {
-                sectionHtml += '<button class="btn-qty btn-plus" onclick="changeQty(' + p.id + ', 1)">+ إضافة للسلة</button>';
+                sectionHtml += '<button class="btn-qty btn-plus" onclick="changeQty(' + p.id + ', 1)">+ إضافة</button>';
             }
 
             sectionHtml += '</div></div>';
@@ -831,7 +871,6 @@
         return sectionHtml;
     }
 
-    // عرض شبكة المنتجات التقليدية عند البحث أو تصفية قسم معين (مع دعم قسم المنتجات المميزة)
     function renderStandardGrid() {
         var html = '<div class="products-grid-view">';
         var matchCount = 0;
@@ -866,9 +905,9 @@
                 if (qty > 0) {
                     html += '<button class="btn-qty btn-minus" onclick="changeQty(' + p.id + ', -1)">-</button>' +
                             '<span class="qty-number">' + qty + '</span>' +
-                            '<button class="btn-qty btn-plus" style="width:30px;" onclick="changeQty(' + p.id + ', 1)">+</button>';
+                            '<button class="btn-qty btn-plus" style="width:26px;" onclick="changeQty(' + p.id + ', 1)">+</button>';
                 } else {
-                    html += '<button class="btn-qty btn-plus" onclick="changeQty(' + p.id + ', 1)">+ إضافة للسلة</button>';
+                    html += '<button class="btn-qty btn-plus" onclick="changeQty(' + p.id + ', 1)">+ إضافة</button>';
                 }
 
                 html += '</div></div>';
@@ -949,7 +988,6 @@
         renderDetailQtyControls(p.id);
     }
 
-    // إضافة زر الشراء الآن تحت أزرار إضافة للسلة داخل صفحة تفاصيل المنتج
     function renderDetailQtyControls(id) {
         var qty = cart[id] || 0;
         var box = document.getElementById('detailQtyBox');
@@ -966,8 +1004,8 @@
         }
         html += '</div>';
 
-        // زر الشراء الآن يحولنا إلى السلة مباشرة
         html += '<button onclick="buyNowProduct(' + id + ')" style="width: 100%; padding: 12px; background: #16a34a; color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25); transition: all 0.2s ease;">⚡ شراء الآن</button>';
+        html += '<button onclick="openShopPage()" style="width: 100%; padding: 12px; background: #0f172a; color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25); transition: all 0.2s ease;">🏠 الصفحة الرئيسية</button>';
         html += '</div>';
         
         box.innerHTML = html;
@@ -1013,6 +1051,7 @@
     }
 
     function openCartPage() {
+        hideSearchBox();
         document.getElementById('shopPage').classList.add('hidden');
         document.getElementById('productDetailPage').classList.add('hidden');
         document.getElementById('cartPage').classList.remove('hidden');
@@ -1026,6 +1065,7 @@
     }
 
     function openShopPage() {
+        hideSearchBox();
         document.getElementById('cartPage').classList.add('hidden');
         document.getElementById('productDetailPage').classList.add('hidden');
         document.getElementById('shopPage').classList.remove('hidden');
