@@ -861,7 +861,7 @@
                         '<span class="qty-number">' + qty + '</span>' +
                         '<button class="btn-qty btn-plus" style="width:26px;" onclick="changeQty(' + p.id + ', 1)">+</button>';
             } else {
-                sectionHtml += '<button class="btn-qty btn-plus" onclick="changeQty(' + p.id + ', 1)">+ إضافة للسلة</button>';
+                sectionHtml += '<button class="btn-qty btn-plus" onclick="changeQty(' + p.id + ', 1)">+ إضافة</button>';
             }
 
             sectionHtml += '</div></div>';
@@ -1160,26 +1160,56 @@
         localStorage.setItem('cust_phone', phone);
         localStorage.setItem('cust_address', address);
 
-        var msg = "*طلب جديد من المتجر 🛍️*\n\n";
-        msg += "*الاسم:* " + name + "\n";
-        msg += "*رقم الهاتف:* " + phone + "\n";
-        msg += "*العنوان:* " + address + "\n";
-        msg += "------------------------\n*المنتجات المختارة:*\n";
-
+        var itemsSummary = "";
         var subTotal = 0;
         for (var id in cart) {
             var p = getProductById(id);
             if (p) {
                 var itemTotal = p.price * cart[id];
                 subTotal += itemTotal;
+                itemsSummary += p.name + " (" + cart[id] + "x), ";
+            }
+        }
+        if (itemsSummary.endsWith(", ")) {
+            itemsSummary = itemsSummary.slice(0, -2);
+        }
+
+        var discountVal = (appliedCoupon && appliedCoupon.discount) ? appliedCoupon.discount + "%" : "0%";
+        var discountAmount = 0;
+        if (appliedCoupon && appliedCoupon.discount) {
+            discountAmount = Math.round((subTotal * appliedCoupon.discount) / 100);
+        }
+        var finalTotal = subTotal - discountAmount;
+
+        // تسجيل عملية البيع في الشيت عبر طلب POST
+        fetch(SHEET_API_URL, {
+            method: "POST",
+            body: JSON.stringify({
+                action: "recordSale",
+                name: name,
+                phone: phone,
+                address: address,
+                items: itemsSummary,
+                discount: discountVal,
+                total: finalTotal
+            })
+        }).catch(function(err) { console.log(err); });
+
+        var msg = "*طلب جديد من المتجر 🛍️*\n\n";
+        msg += "*الاسم:* " + name + "\n";
+        msg += "*رقم الهاتف:* " + phone + "\n";
+        msg += "*العنوان:* " + address + "\n";
+        msg += "------------------------\n*المنتجات المختارة:*\n";
+
+        for (var id in cart) {
+            var p = getProductById(id);
+            if (p) {
+                var itemTotal = p.price * cart[id];
                 msg += "• " + p.name + " (" + cart[id] + "x) = " + itemTotal.toLocaleString() + " د.ع\n";
             }
         }
 
-        var discountAmount = 0;
         if (appliedCoupon && appliedCoupon.discount) {
-            discountAmount = Math.round((subTotal * appliedCoupon.discount) / 100);
-            var finalTotal = subTotal - discountAmount;
             msg += "------------------------\n";
             msg += "*المجموع:* " + subTotal.toLocaleString() + " د.ع\n";
             msg += "*كود الخصم:* " + appliedCoupon.code + " (" + appliedCoupon.discount + "%)\n";
