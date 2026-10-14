@@ -116,6 +116,7 @@
         <button class="tab-btn" id="tabHiddenBtn" onclick="switchTab('hidden')">🙈 المنتجات المخفية</button>
         <button class="tab-btn" id="tabCategoriesBtn" onclick="switchTab('categories')">📁 الأقسام</button>
         <button class="tab-btn" id="tabCouponsBtn" onclick="switchTab('coupons')">🎟️ الخصم</button>
+        <button class="tab-btn" id="tabSalesBtn" onclick="switchTab('sales')">📊 المبيعات</button>
     </div>
 
     <!-- تبويب الصفحة الرئيسية للوحة التحكم -->
@@ -281,6 +282,18 @@
         </div>
     </div>
 
+    <!-- تبويب المبيعات -->
+    <div id="salesTab" class="hidden">
+        <div class="form-group">
+            <label>اختر التاريخ لعرض المبيعات:</label>
+            <input type="date" id="salesDateFilter" style="background: #0f172a; color: #fff; padding: 10px; border-radius: 8px; border: 1px solid #334155; margin-bottom: 8px;">
+            <button type="button" onclick="filterSalesByDate()" class="btn-submit" style="background: #0284c7; margin-top: 0;">اختيار 🔍</button>
+        </div>
+        <div id="salesContainer">
+            <p style="text-align:center; color:#94a3b8; padding:20px;">اختر تاريخاً لعرض المبيعات...</p>
+        </div>
+    </div>
+
     <div id="productStatus" class="status-msg"></div>
 </div>
 
@@ -290,6 +303,7 @@
     var allProducts = [];
     var allCoupons = [];
     var allCategories = [];
+    var allSales = [];
     var editingProductId = null;
     var editingCategoryValue = ""; 
     var existingImages = ["", "", ""];
@@ -423,6 +437,7 @@
         var hiddenTab = document.getElementById("hiddenTab");
         var categoriesTab = document.getElementById("categoriesTab");
         var couponsTab = document.getElementById("couponsTab");
+        var salesTab = document.getElementById("salesTab");
 
         var tabHomeBtn = document.getElementById("tabHomeBtn");
         var tabFormBtn = document.getElementById("tabFormBtn");
@@ -430,6 +445,7 @@
         var tabHiddenBtn = document.getElementById("tabHiddenBtn");
         var tabCategoriesBtn = document.getElementById("tabCategoriesBtn");
         var tabCouponsBtn = document.getElementById("tabCouponsBtn");
+        var tabSalesBtn = document.getElementById("tabSalesBtn");
 
         if (homeTab) homeTab.classList.add("hidden");
         if (formTab) formTab.classList.add("hidden");
@@ -437,6 +453,7 @@
         if (hiddenTab) hiddenTab.classList.add("hidden");
         if (categoriesTab) categoriesTab.classList.add("hidden");
         if (couponsTab) couponsTab.classList.add("hidden");
+        if (salesTab) salesTab.classList.add("hidden");
 
         if (tabHomeBtn) tabHomeBtn.classList.remove("active");
         if (tabFormBtn) tabFormBtn.classList.remove("active");
@@ -444,6 +461,7 @@
         if (tabHiddenBtn) tabHiddenBtn.classList.remove("active");
         if (tabCategoriesBtn) tabCategoriesBtn.classList.remove("active");
         if (tabCouponsBtn) tabCouponsBtn.classList.remove("active");
+        if (tabSalesBtn) tabSalesBtn.classList.remove("active");
 
         if (tabName === 'home') {
             if (homeTab) homeTab.classList.remove("hidden");
@@ -469,7 +487,77 @@
             if (couponsTab) couponsTab.classList.remove("hidden");
             if (tabCouponsBtn) tabCouponsBtn.classList.add("active");
             loadCouponsList();
+        } else if (tabName === 'sales') {
+            if (salesTab) salesTab.classList.remove("hidden");
+            if (tabSalesBtn) tabSalesBtn.classList.add("active");
+            if (!document.getElementById("salesDateFilter").value) {
+                var today = new Date();
+                var yyyy = today.getFullYear();
+                var mm = String(today.getMonth() + 1).padStart(2, '0');
+                var dd = String(today.getDate()).padStart(2, '0');
+                document.getElementById("salesDateFilter").value = yyyy + '-' + mm + '-' + dd;
+            }
+            loadSalesList();
         }
+    }
+
+    async function loadSalesList() {
+        var container = document.getElementById("salesContainer");
+        container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px;">جار تحميل المبيعات...</p>';
+        try {
+            var res = await fetch(SHEET_API_URL + "?action=getSales");
+            var data = await res.json();
+            if (data && data.status === "expired") {
+                lockSystem(data.message);
+                return;
+            }
+            allSales = Array.isArray(data) ? data : [];
+            filterSalesByDate();
+        } catch(err) {
+            container.innerHTML = '<p style="text-align:center; color:#ef4444; padding:20px;">فشل في جلب المبيعات</p>';
+        }
+    }
+
+    function filterSalesByDate() {
+        var dateInput = document.getElementById("salesDateFilter").value;
+        var container = document.getElementById("salesContainer");
+        if (!dateInput) {
+            container.innerHTML = '<p style="text-align:center; color:#ef4444; padding:20px;">يرجى اختيار التاريخ أولاً</p>';
+            return;
+        }
+
+        var filtered = allSales.filter(function(s) {
+            var sDate = String(s.date || "").trim();
+            var cleanSDate = sDate.split('T')[0].split(' ')[0];
+            return cleanSDate === dateInput;
+        });
+
+        if (filtered.length === 0) {
+            container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px;">لا توجد مبيعات مسجلة في هذا التاريخ</p>';
+            return;
+        }
+
+        var html = '<div style="overflow-x:auto;"><table style="width:100%; border-collapse:collapse; margin-top:10px; font-size:13px; text-align:right;">' +
+            '<thead><tr style="background:#1e293b; color:#38bdf8; border-bottom:2px solid #334155;">' +
+            '<th style="padding:10px; border:1px solid #334155;">الاسم</th>' +
+            '<th style="padding:10px; border:1px solid #334155;">رقم الهاتف</th>' +
+            '<th style="padding:10px; border:1px solid #334155;">التفاصيل</th>' +
+            '<th style="padding:10px; border:1px solid #334155;">نسبة الخصم</th>' +
+            '<th style="padding:10px; border:1px solid #334155;">المبلغ الإجمالي</th>' +
+            '</tr></thead><tbody>';
+
+        filtered.forEach(function(s) {
+            html += '<tr style="border-bottom:1px solid #334155; background:#0f172a;">' +
+                '<td style="padding:10px; border:1px solid #334155;">' + s.name + '</td>' +
+                '<td style="padding:10px; border:1px solid #334155;">' + s.phone + '</td>' +
+                '<td style="padding:10px; border:1px solid #334155;">' + s.items + '</td>' +
+                '<td style="padding:10px; border:1px solid #334155;">' + (s.discount || '0%') + '</td>' +
+                '<td style="padding:10px; border:1px solid #334155; color:#4ade80; font-weight:bold;">' + Number(s.total).toLocaleString() + ' د.ع</td>' +
+                '</tr>';
+        });
+
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
     }
 
     async function loadCategoriesDropdown() {
