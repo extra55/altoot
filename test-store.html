@@ -516,7 +516,7 @@
     <div style="position: sticky; top: 0; background: #f8fafc; z-index: 1000; padding-top: 2px; margin: -12px -12px 10px -12px; padding-left: 12px; padding-right: 12px;">
         <div class="header">
             <div style="flex: 1; min-width: 0; margin-left: 12px;">
-                <h1>1متجر كوزمتك</h1>
+                <h1>متجر كوزمتك22</h1>
                 <p>أفضل المنتجات الأصلية والعالمية</p>
             </div>
             <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
@@ -1183,11 +1183,15 @@
         }
         var finalTotal = subTotal - discountAmount;
 
-        // تسجيل عملية البيع في الشيت عبر طلب POST
+        // توليد رقم فاتورة فريد
+        var invoiceNo = "INV-" + Math.floor(100000 + Math.random() * 900000);
+
+        // إرسال الطلب وحفظه في الشيت تحت تبويب الطلبات (Orders)
         fetch(SHEET_API_URL, {
             method: "POST",
             body: JSON.stringify({
-                action: "recordSale",
+                action: "recordOrder",
+                invoiceNo: invoiceNo,
                 name: name,
                 phone: phone,
                 address: address,
@@ -1197,31 +1201,7 @@
             })
         }).catch(function(err) { console.log(err); });
 
-        var msg = "*طلب جديد من المتجر 🛍️*\n\n";
-        msg += "*الاسم:* " + name + "\n";
-        msg += "*رقم الهاتف:* " + phone + "\n";
-        msg += "*العنوان:* " + address + "\n";
-        msg += "------------------------\n*المنتجات المختارة:*\n";
-
-        for (var id in cart) {
-            var p = getProductById(id);
-            if (p) {
-                var itemTotal = p.price * cart[id];
-                msg += "• " + p.name + " (" + cart[id] + "x) = " + itemTotal.toLocaleString() + " د.ع\n";
-            }
-        }
-
-        if (appliedCoupon && appliedCoupon.discount) {
-            msg += "------------------------\n";
-            msg += "*المجموع:* " + subTotal.toLocaleString() + " د.ع\n";
-            msg += "*كود الخصم:* " + appliedCoupon.code + " (" + appliedCoupon.discount + "%)\n";
-            msg += "*قيمة الخصم:* -" + discountAmount.toLocaleString() + " د.ع\n";
-            msg += "*الإجمالي الكلي بعد الخصم:* " + finalTotal.toLocaleString() + " د.ع";
-        } else {
-            msg += "------------------------\n*الإجمالي الكلي:* " + subTotal.toLocaleString() + " د.ع";
-        }
-
-        // إنشاء فاتورة PDF وتحميلها تلقائياً على جهاز الزبون
+        // إنشاء عنصر الفاتورة لـ PDF لتنزيلها على جهاز الزبون
         var invoiceElement = document.createElement('div');
         invoiceElement.style.padding = '20px';
         invoiceElement.style.fontFamily = 'Tajawal, sans-serif';
@@ -1232,7 +1212,7 @@
 
         var invoiceHtml = '<div style="text-align:center; border-bottom:2px solid #0f172a; padding-bottom:10px; margin-bottom:15px;">' +
             '<h2 style="color:#0f172a; margin:0 0 5px 0;">فاتورة طلب منتجات 🛍️</h2>' +
-            '<p style="color:#64748b; font-size:12px; margin:0;">متجر كوزمتك الرقمي</p>' +
+            '<p style="color:#64748b; font-size:12px; margin:0;">رقم الفاتورة: <strong>' + invoiceNo + '</strong></p>' +
             '</div>' +
             '<div style="margin-bottom:12px; font-size:13px; line-height:1.6;">' +
             '<strong>اسم الزبون:</strong> ' + name + '<br>' +
@@ -1279,16 +1259,21 @@
 
         var opt = {
             margin:       10,
-            filename:     'invoice_' + Date.now() + '.pdf',
+            filename:     invoiceNo + '.pdf',
             image:        { type: 'jpeg', quality: 0.98 },
             html2canvas:  { scale: 2 },
             jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
-        // تحميل ملف الـ PDF فوراً لجهاز الزبون
+        // تحميل ملف الفاتورة PDF على جهاز الزبون
         html2pdf().from(invoiceElement).set(opt).save();
 
-        // فتح رقم واتساب المتجر مباشرة مع النص المفصل للطلب
+        // نص الرسالة المرسلة بالواتساب (يحتوي على رقم الفاتورة فقط مع نص احترافي)
+        var msg = "مرحباً متجر كوزمتك 🛍️\n";
+        msg += "لقد قمت بإتمام طلب جديد بنجاح.\n";
+        msg += "رقم الفاتورة الخاص بي هو: *" + invoiceNo + "*\n";
+        msg += "يرجى متابعة الطلب. شكراً لكم! 🙏";
+
         window.open("https://wa.me/" + PHARMACY_WA + "?text=" + encodeURIComponent(msg), '_blank');
     }
 
