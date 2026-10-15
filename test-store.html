@@ -1183,7 +1183,45 @@
         }
         var finalTotal = subTotal - discountAmount;
 
-        // إنشاء فاتورة PDF وتحميلها تلقائياً عند إرسال الطلب
+        // تسجيل عملية البيع في الشيت عبر طلب POST[cite: 22]
+        fetch(SHEET_API_URL, {
+            method: "POST",
+            body: JSON.stringify({
+                action: "recordSale",
+                name: name,
+                phone: phone,
+                address: address,
+                items: itemsSummary,
+                discount: discountVal,
+                total: finalTotal
+            })
+        }).catch(function(err) { console.log(err); });
+
+        var msg = "*طلب جديد من المتجر 🛍️*\n\n";
+        msg += "*الاسم:* " + name + "\n";
+        msg += "*رقم الهاتف:* " + phone + "\n";
+        msg += "*العنوان:* " + address + "\n";
+        msg += "------------------------\n*المنتجات المختارة:*\n";
+
+        for (var id in cart) {
+            var p = getProductById(id);
+            if (p) {
+                var itemTotal = p.price * cart[id];
+                msg += "• " + p.name + " (" + cart[id] + "x) = " + itemTotal.toLocaleString() + " د.ع\n";
+            }
+        }
+
+        if (appliedCoupon && appliedCoupon.discount) {
+            msg += "------------------------\n";
+            msg += "*المجموع:* " + subTotal.toLocaleString() + " د.ع\n";
+            msg += "*كود الخصم:* " + appliedCoupon.code + " (" + appliedCoupon.discount + "%)\n";
+            msg += "*قيمة الخصم:* -" + discountAmount.toLocaleString() + " د.ع\n";
+            msg += "*الإجمالي الكلي بعد الخصم:* " + finalTotal.toLocaleString() + " د.ع";
+        } else {
+            msg += "------------------------\n*الإجمالي الكلي:* " + subTotal.toLocaleString() + " د.ع";
+        }
+
+        // إنشاء عنصر الفاتورة لـ PDF[cite: 22]
         var invoiceElement = document.createElement('div');
         invoiceElement.style.padding = '20px';
         invoiceElement.style.fontFamily = 'Tajawal, sans-serif';
@@ -1246,47 +1284,28 @@
             html2canvas:  { scale: 2 },
             jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
-        html2pdf().from(invoiceElement).save();
 
-        // تسجيل عملية البيع في الشيت عبر طلب POST
-        fetch(SHEET_API_URL, {
-            method: "POST",
-            body: JSON.stringify({
-                action: "recordSale",
-                name: name,
-                phone: phone,
-                address: address,
-                items: itemsSummary,
-                discount: discountVal,
-                total: finalTotal
-            })
-        }).catch(function(err) { console.log(err); });
-
-        var msg = "*طلب جديد من المتجر 🛍️*\n\n";
-        msg += "*الاسم:* " + name + "\n";
-        msg += "*رقم الهاتف:* " + phone + "\n";
-        msg += "*العنوان:* " + address + "\n";
-        msg += "------------------------\n*المنتجات المختارة:*\n";
-
-        for (var id in cart) {
-            var p = getProductById(id);
-            if (p) {
-                var itemTotal = p.price * cart[id];
-                msg += "• " + p.name + " (" + cart[id] + "x) = " + itemTotal.toLocaleString() + " د.ع\n";
+        // توليد ملف PDF كملف (Blob) ومشاركته مباشرة إلى واتساب باستخدام واجهة مشاركة الملفات في المتصفح
+        html2pdf().from(invoiceElement).set(opt).output('blob').then(function(pdfBlob) {
+            var file = new File([pdfBlob], 'invoice_' + Date.now() + '.pdf', { type: 'application/pdf' });
+            
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                navigator.share({
+                    title: 'فاتورة الطلب',
+                    text: msg,
+                    files: [file]
+                }).catch(function(error) {
+                    console.log('Error sharing:', error);
+                    // في حال إلغاء المشاركة، يتم الحفظ وفتح واتساب بالنص كبديل
+                    html2pdf().from(invoiceElement).set(opt).save();
+                    window.open("https://wa.me/" + PHARMACY_WA + "?text=" + encodeURIComponent(msg), '_blank');
+                });
+            } else {
+                // إذا لم يدعم المتصفح مشاركة الملفات مباشرة، يتم تحميل الملف وفتح واتساب بالنص
+                html2pdf().from(invoiceElement).set(opt).save();
+                window.open("https://wa.me/" + PHARMACY_WA + "?text=" + encodeURIComponent(msg), '_blank');
             }
-        }
-
-        if (appliedCoupon && appliedCoupon.discount) {
-            msg += "------------------------\n";
-            msg += "*المجموع:* " + subTotal.toLocaleString() + " د.ع\n";
-            msg += "*كود الخصم:* " + appliedCoupon.code + " (" + appliedCoupon.discount + "%)\n";
-            msg += "*قيمة الخصم:* -" + discountAmount.toLocaleString() + " د.ع\n";
-            msg += "*الإجمالي الكلي بعد الخصم:* " + finalTotal.toLocaleString() + " د.ع";
-        } else {
-            msg += "------------------------\n*الإجمالي الكلي:* " + subTotal.toLocaleString() + " د.ع";
-        }
-
-        window.open("https://wa.me/" + PHARMACY_WA + "?text=" + encodeURIComponent(msg), '_blank');
+        });
     }
 
     loadCartFromStorage();
