@@ -516,7 +516,7 @@
     <div style="position: sticky; top: 0; background: #f8fafc; z-index: 1000; padding-top: 2px; margin: -12px -12px 10px -12px; padding-left: 12px; padding-right: 12px;">
         <div class="header">
             <div style="flex: 1; min-width: 0; margin-left: 12px;">
-                <h1>متجر كوزمتك</h1>
+                <h1>1متجر كوزمتك</h1>
                 <p>أفضل المنتجات الأصلية والعالمية</p>
             </div>
             <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
@@ -1183,7 +1183,7 @@
         }
         var finalTotal = subTotal - discountAmount;
 
-        // تسجيل عملية البيع في الشيت عبر طلب POST[cite: 22]
+        // تسجيل عملية البيع في الشيت عبر طلب POST
         fetch(SHEET_API_URL, {
             method: "POST",
             body: JSON.stringify({
@@ -1221,7 +1221,7 @@
             msg += "------------------------\n*الإجمالي الكلي:* " + subTotal.toLocaleString() + " د.ع";
         }
 
-        // إنشاء عنصر الفاتورة لـ PDF[cite: 22]
+        // إنشاء فاتورة PDF وتحميلها تلقائياً على جهاز الزبون
         var invoiceElement = document.createElement('div');
         invoiceElement.style.padding = '20px';
         invoiceElement.style.fontFamily = 'Tajawal, sans-serif';
@@ -1285,27 +1285,11 @@
             jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
 
-        // توليد ملف PDF كملف (Blob) ومشاركته مباشرة إلى واتساب باستخدام واجهة مشاركة الملفات في المتصفح
-        html2pdf().from(invoiceElement).set(opt).output('blob').then(function(pdfBlob) {
-            var file = new File([pdfBlob], 'invoice_' + Date.now() + '.pdf', { type: 'application/pdf' });
-            
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                navigator.share({
-                    title: 'فاتورة الطلب',
-                    text: msg,
-                    files: [file]
-                }).catch(function(error) {
-                    console.log('Error sharing:', error);
-                    // في حال إلغاء المشاركة، يتم الحفظ وفتح واتساب بالنص كبديل
-                    html2pdf().from(invoiceElement).set(opt).save();
-                    window.open("https://wa.me/" + PHARMACY_WA + "?text=" + encodeURIComponent(msg), '_blank');
-                });
-            } else {
-                // إذا لم يدعم المتصفح مشاركة الملفات مباشرة، يتم تحميل الملف وفتح واتساب بالنص
-                html2pdf().from(invoiceElement).set(opt).save();
-                window.open("https://wa.me/" + PHARMACY_WA + "?text=" + encodeURIComponent(msg), '_blank');
-            }
-        });
+        // تحميل ملف الـ PDF فوراً لجهاز الزبون
+        html2pdf().from(invoiceElement).set(opt).save();
+
+        // فتح رقم واتساب المتجر مباشرة مع النص المفصل للطلب
+        window.open("https://wa.me/" + PHARMACY_WA + "?text=" + encodeURIComponent(msg), '_blank');
     }
 
     loadCartFromStorage();
