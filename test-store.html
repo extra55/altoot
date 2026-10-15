@@ -514,7 +514,7 @@
     <div style="position: sticky; top: 0; background: #f8fafc; z-index: 1000; padding-top: 2px; margin: -12px -12px 10px -12px; padding-left: 12px; padding-right: 12px;">
         <div class="header">
             <div style="flex: 1; min-width: 0; margin-left: 12px;">
-                <h1>333متجر كوزمتك</h1>
+                <h1>متجر كوزمتك333</h1>
                 <p>أفضل المنتجات الأصلية والعالمية</p>
             </div>
             <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
@@ -1203,4 +1203,13 @@
         msg += "رقم الفاتورة الخاص بي هو: *" + invoiceNo + "*\n";
         msg += "يرجى متابعة الطلب. شكراً لكم! 🙏";
 
-        window.open("
+        window.open("https://wa.me/" + PHARMACY_WA + "?text=" + encodeURIComponent(msg), '_blank');
+    }
+
+    loadCartFromStorage();
+    fetchProductsFromSheet();
+    fetchCouponsFromSheet();
+</script>
+
+</body>
+</html>
