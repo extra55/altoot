@@ -117,9 +117,10 @@
         <button class="tab-btn" id="tabCategoriesBtn" onclick="switchTab('categories')">📁 الأقسام</button>
         <button class="tab-btn" id="tabCouponsBtn" onclick="switchTab('coupons')">🎟️ الخصم</button>
         <button class="tab-btn" id="tabSalesBtn" onclick="switchTab('sales')">📊 المبيعات</button>
+        <button class="tab-btn" id="tabOrdersBtn" onclick="switchTab('orders')">📦 الطلبات</button>
     </div>
 
-    <!-- تبويب الصفحة الرئيسية للوحة التحكم -->
+    <!-- تبويب الصفحة الرئيسية لوحة التحكم -->
     <div id="homeTab">
         <div style="background: #0f172a; padding: 20px; border-radius: 12px; border: 1px solid #334155; text-align: center; margin-bottom: 10px;">
             <div style="font-size: 36px; margin-bottom: 10px;">📅</div>
@@ -294,6 +295,20 @@
         </div>
     </div>
 
+    <!-- تبويب الطلبات (الجديد) -->
+    <div id="ordersTab" class="hidden">
+        <label style="color: #38bdf8; font-size: 15px; margin-bottom: 10px; display: block;">📋 تصفية الطلبات حسب المرحلة:</label>
+        <div style="display: flex; gap: 6px; margin-bottom: 15px; flex-wrap: wrap;">
+            <button class="tab-btn active" id="filterAllOrders" onclick="filterOrdersByStatus('الكل', this)">الكل</button>
+            <button class="tab-btn" id="filterPending" onclick="filterOrdersByStatus('الانتظار', this)">⏳ قيد الانتظار</button>
+            <button class="tab-btn" id="filterPrepared" onclick="filterOrdersByStatus('تم التجهيز', this)">🛠️ تم التجهيز</button>
+            <button class="tab-btn" id="filterDelivered" onclick="filterOrdersByStatus('تم التسليم', this)">✅ تم التسليم</button>
+        </div>
+        <div id="ordersContainer">
+            <p style="text-align:center; color:#94a3b8; padding:20px;">جار تحميل الطلبات...</p>
+        </div>
+    </div>
+
     <div id="productStatus" class="status-msg"></div>
 </div>
 
@@ -304,6 +319,9 @@
     var allCoupons = [];
     var allCategories = [];
     var allSales = [];
+    var allOrders = [];
+    var currentOrderStatusFilter = "الكل";
+
     var editingProductId = null;
     var editingCategoryValue = ""; 
     var existingImages = ["", "", ""];
@@ -394,7 +412,7 @@
     async function loadSubscriptionDetails() {
         var infoText = document.getElementById("subscriptionInfoText");
         if (!infoText) return;
-        infoText.innerText = "جاري جلب تاريخ انتهاء الاشتراك من الشيت...";
+        infoText.innerText = "يرجى الانتظار جار جلب تاريخ انتهاء الاشتراك ...";
         try {
             var res = await fetch(SHEET_API_URL + "?action=checkSubscription");
             var data = await res.json();
@@ -438,6 +456,7 @@
         var categoriesTab = document.getElementById("categoriesTab");
         var couponsTab = document.getElementById("couponsTab");
         var salesTab = document.getElementById("salesTab");
+        var ordersTab = document.getElementById("ordersTab");
 
         var tabHomeBtn = document.getElementById("tabHomeBtn");
         var tabFormBtn = document.getElementById("tabFormBtn");
@@ -446,6 +465,7 @@
         var tabCategoriesBtn = document.getElementById("tabCategoriesBtn");
         var tabCouponsBtn = document.getElementById("tabCouponsBtn");
         var tabSalesBtn = document.getElementById("tabSalesBtn");
+        var tabOrdersBtn = document.getElementById("tabOrdersBtn");
 
         if (homeTab) homeTab.classList.add("hidden");
         if (formTab) formTab.classList.add("hidden");
@@ -454,6 +474,7 @@
         if (categoriesTab) categoriesTab.classList.add("hidden");
         if (couponsTab) couponsTab.classList.add("hidden");
         if (salesTab) salesTab.classList.add("hidden");
+        if (ordersTab) ordersTab.classList.add("hidden");
 
         if (tabHomeBtn) tabHomeBtn.classList.remove("active");
         if (tabFormBtn) tabFormBtn.classList.remove("active");
@@ -462,6 +483,7 @@
         if (tabCategoriesBtn) tabCategoriesBtn.classList.remove("active");
         if (tabCouponsBtn) tabCouponsBtn.classList.remove("active");
         if (tabSalesBtn) tabSalesBtn.classList.remove("active");
+        if (tabOrdersBtn) tabOrdersBtn.classList.remove("active");
 
         if (tabName === 'home') {
             if (homeTab) homeTab.classList.remove("hidden");
@@ -498,6 +520,141 @@
                 document.getElementById("salesDateFilter").value = yyyy + '-' + mm + '-' + dd;
             }
             loadSalesList();
+        } else if (tabName === 'orders') {
+            if (ordersTab) ordersTab.classList.remove("hidden");
+            if (tabOrdersBtn) tabOrdersBtn.classList.add("active");
+            loadOrdersList();
+        }
+    }
+
+    async function loadOrdersList() {
+        var container = document.getElementById("ordersContainer");
+        container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px;">جار تحميل الطلبات...</p>';
+        try {
+            var res = await fetch(SHEET_API_URL + "?action=getOrders");
+            var data = await res.json();
+            if (data && data.status === "expired") {
+                lockSystem(data.message);
+                return;
+            }
+            allOrders = Array.isArray(data) ? data : [];
+            renderOrders();
+        } catch(err) {
+            container.innerHTML = '<p style="text-align:center; color:#ef4444; padding:20px;">فشل في جلب الطلبات</p>';
+        }
+    }
+
+    function filterOrdersByStatus(status, btnElement) {
+        currentOrderStatusFilter = status;
+        var parent = btnElement.parentElement;
+        var btns = parent.getElementsByTagName("button");
+        for (var i = 0; i < btns.length; i++) {
+            btns[i].classList.remove("active");
+        }
+        btnElement.classList.add("active");
+        renderOrders();
+    }
+
+    function renderOrders() {
+        var container = document.getElementById("ordersContainer");
+        var filtered = allOrders;
+
+        if (currentOrderStatusFilter !== "الكل") {
+            filtered = allOrders.filter(function(o) {
+                return String(o.status).trim() === currentOrderStatusFilter;
+            });
+        }
+
+        if (filtered.length === 0) {
+            container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:20px;">لا توجد طلبات مطابقة حالياً</p>';
+            return;
+        }
+
+        var html = "";
+        filtered.forEach(function(o) {
+            var statusColor = "#f59e0b"; // انتظار
+            if (o.status === "تم التجهيز") statusColor = "#38bdf8";
+            if (o.status === "تم التسليم") statusColor = "#22c55e";
+
+            html += `
+                <div style="background:#0f172a; border:1px solid #334155; padding:15px; border-radius:10px; margin-bottom:12px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; padding-bottom:8px; margin-bottom:10px;">
+                        <span style="font-weight:bold; color:#38bdf8; font-size:14px; font-family:monospace;">🧾 رقم الفاتورة: ${o.invoiceNo}</span>
+                        <span style="background:${statusColor}; color:#fff; padding:3px 8px; border-radius:6px; font-size:11px; font-weight:bold;">${o.status || 'الانتظار'}</span>
+                    </div>
+                    <div style="font-size:13px; color:#cbd5e1; line-height:1.6; margin-bottom:12px;">
+                        👤 <strong>الاسم:</strong> ${o.name}<br>
+                        📞 <strong>الهاتف:</strong> ${o.phone}<br>
+                        📍 <strong>العنوان:</strong> ${o.address}<br>
+                        🛒 <strong>المنتجات:</strong> ${o.items}<br>
+                        🏷️ <strong>الخصم:</strong> ${o.discount || '0%'}<br>
+                        💰 <strong>الإجمالي:</strong> <span style="color:#4ade80; font-weight:bold;">${Number(o.total).toLocaleString()} د.ع</span><br>
+                        📅 <strong>التاريخ:</strong> ${o.date}
+                    </div>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap; border-top:1px solid #334155; padding-top:10px;">
+                        <button class="btn-action" style="background:#38bdf8; color:#0f172a;" onclick="updateOrderStatus('${o.invoiceNo}', 'تم التجهيز')">🛠️ تم التجهيز</button>
+                        <button class="btn-action" style="background:#22c55e; color:#fff;" onclick="updateOrderStatus('${o.invoiceNo}', 'تم التسليم')">✅ تم التسليم</button>
+                        <button class="btn-action btn-delete" onclick="deleteOrderAdmin('${o.invoiceNo}')">🗑️ حذف</button>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    async function updateOrderStatus(invoiceNo, newStatus) {
+        var statusMsg = document.getElementById('productStatus');
+        statusMsg.className = "status-msg status-loading";
+        statusMsg.style.display = "block";
+        statusMsg.innerText = "جار تحديث حالة الطلب...";
+
+        try {
+            var response = await fetch(SHEET_API_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "updateOrderStatus", invoiceNo: invoiceNo, status: newStatus })
+            });
+            var resData = await response.json();
+            if (resData.status === "success") {
+                statusMsg.className = "status-msg status-success";
+                statusMsg.innerText = "✅ تم تحديث حالة الطلب بنجاح";
+                loadOrdersList();
+                setTimeout(function() { statusMsg.style.display = "none"; }, 3000);
+            } else {
+                throw new Error(resData.message || "فشل التحديث");
+            }
+        } catch(err) {
+            statusMsg.className = "status-msg status-error";
+            statusMsg.innerText = "❌ تعذر التحديث";
+            setTimeout(function() { statusMsg.style.display = "none"; }, 3000);
+        }
+    }
+
+    async function deleteOrderAdmin(invoiceNo) {
+        if (!confirm(`هل أنت متأكد من حذف الطلب رقم: ${invoiceNo}؟`)) return;
+
+        var statusMsg = document.getElementById('productStatus');
+        statusMsg.className = "status-msg status-loading";
+        statusMsg.style.display = "block";
+        statusMsg.innerText = "جار حذف الطلب...";
+
+        try {
+            var response = await fetch(SHEET_API_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "deleteOrder", invoiceNo: invoiceNo })
+            });
+            var resData = await response.json();
+            if (resData.status === "success") {
+                statusMsg.className = "status-msg status-success";
+                statusMsg.innerText = "✅ تم حذف الطلب بنجاح";
+                loadOrdersList();
+                setTimeout(function() { statusMsg.style.display = "none"; }, 3000);
+            } else {
+                throw new Error(resData.message || "فشل الحذف");
+            }
+        } catch(err) {
+            statusMsg.className = "status-msg status-error";
+            statusMsg.innerText = "❌ تعذر الحذف";
+            setTimeout(function() { statusMsg.style.display = "none"; }, 3000);
         }
     }
 
@@ -696,18 +853,14 @@
                 loadCategoriesDropdown();
                 loadProductsList();
 
-                setTimeout(function() {
-                    statusMsg.style.display = "none";
-                }, 3000);
+                setTimeout(function() { statusMsg.style.display = "none"; }, 3000);
             } else {
                 throw new Error(resData.message || "فشل تعديل اسم القسم");
             }
         } catch (err) {
             statusMsg.className = "status-msg status-error";
             statusMsg.innerText = "❌ تعذر التعديل: " + err.message;
-            setTimeout(function() {
-                statusMsg.style.display = "none";
-            }, 3000);
+            setTimeout(function() { statusMsg.style.display = "none"; }, 3000);
         }
     }
 
@@ -744,18 +897,14 @@
                 loadCategoriesList();
                 loadCategoriesDropdown();
 
-                setTimeout(function() {
-                    statusMsg.style.display = "none";
-                }, 3000);
+                setTimeout(function() { statusMsg.style.display = "none"; }, 3000);
             } else {
                 throw new Error(resData.message || "فشل الحفظ");
             }
         } catch (err) {
             statusMsg.className = "status-msg status-error";
             statusMsg.innerText = "❌ تعذر إتمام العملية: " + err.message;
-            setTimeout(function() {
-                statusMsg.style.display = "none";
-            }, 3000);
+            setTimeout(function() { statusMsg.style.display = "none"; }, 3000);
         } finally {
             btn.disabled = false;
         }
@@ -788,18 +937,14 @@
                 loadCategoriesList();
                 loadCategoriesDropdown();
 
-                setTimeout(function() {
-                    statusMsg.style.display = "none";
-                }, 3000);
+                setTimeout(function() { statusMsg.style.display = "none"; }, 3000);
             } else {
                 throw new Error(resData.message || "فشل الحذف");
             }
         } catch (err) {
             statusMsg.className = "status-msg status-error";
             statusMsg.innerText = "❌ تعذر الحذف: " + err.message;
-            setTimeout(function() {
-                statusMsg.style.display = "none";
-            }, 3000);
+            setTimeout(function() { statusMsg.style.display = "none"; }, 3000);
         }
     }
 
@@ -831,18 +976,14 @@
                 loadCategoriesDropdown();
                 statusMsg.className = "status-msg status-success";
                 statusMsg.innerText = "✅ تم تحديث الترتيب بنجاح";
-                setTimeout(function() {
-                    statusMsg.style.display = "none";
-                }, 3000);
+                setTimeout(function() { statusMsg.style.display = "none"; }, 3000);
             } else {
                 throw new Error("فشل الحفظ");
             }
         } catch(err) {
             statusMsg.className = "status-msg status-error";
             statusMsg.innerText = "❌ تعذر حفظ الترتيب";
-            setTimeout(function() {
-                statusMsg.style.display = "none";
-            }, 3000);
+            setTimeout(function() { statusMsg.style.display = "none"; }, 3000);
         }
     }
 
@@ -959,18 +1100,14 @@
                     ? "✅ تم إخفاء جميع المنتجات من المتجر" 
                     : "✅ تم إظهار المنتجات في المتجر بنجاح";
 
-                setTimeout(function() {
-                    statusMsg.style.display = "none";
-                }, 3000);
+                setTimeout(function() { statusMsg.style.display = "none"; }, 3000);
             } else {
                 throw new Error(resData.message || "فشل التحديث");
             }
         } catch (err) {
             statusMsg.className = "status-msg status-error";
             statusMsg.innerText = "❌ تعذر إتمام العملية: " + err.message;
-            setTimeout(function() {
-                statusMsg.style.display = "none";
-            }, 3000);
+            setTimeout(function() { statusMsg.style.display = "none"; }, 3000);
         }
     }
 
@@ -1157,18 +1294,14 @@
                 document.getElementById("couponDiscount").value = "";
                 loadCouponsList();
 
-                setTimeout(function() {
-                    statusMsg.style.display = "none";
-                }, 3000);
+                setTimeout(function() { statusMsg.style.display = "none"; }, 3000);
             } else {
                 throw new Error(resData.message || "فشل الحفظ");
             }
         } catch (err) {
             statusMsg.className = "status-msg status-error";
             statusMsg.innerText = "❌ تعذر إتمام العملية: " + err.message;
-            setTimeout(function() {
-                statusMsg.style.display = "none";
-            }, 3000);
+            setTimeout(function() { statusMsg.style.display = "none"; }, 3000);
         } finally {
             btn.disabled = false;
         }
@@ -1200,18 +1333,14 @@
                 statusMsg.innerText = "✅ تم حذف كود الخصم بنجاح";
                 loadCouponsList();
 
-                setTimeout(function() {
-                    statusMsg.style.display = "none";
-                }, 3000);
+                setTimeout(function() { statusMsg.style.display = "none"; }, 3000);
             } else {
                 throw new Error(resData.message || "فشل الحذف");
             }
         } catch (err) {
             statusMsg.className = "status-msg status-error";
             statusMsg.innerText = "❌ تعذر الحذف: " + err.message;
-            setTimeout(function() {
-                statusMsg.style.display = "none";
-            }, 3000);
+            setTimeout(function() { statusMsg.style.display = "none"; }, 3000);
         }
     }
 
@@ -1313,18 +1442,14 @@
                 statusMsg.className = "status-msg status-success";
                 statusMsg.innerText = "✅ تم حذف المنتج بنجاح";
                 loadProductsList();
-                setTimeout(function() {
-                    statusMsg.style.display = "none";
-                }, 3000);
+                setTimeout(function() { statusMsg.style.display = "none"; }, 3000);
             } else {
                 throw new Error(resData.message || "فشل الحذف");
             }
         } catch (err) {
             statusMsg.className = "status-msg status-error";
             statusMsg.innerText = "❌ تعذر الحذف: " + err.message;
-            setTimeout(function() {
-                statusMsg.style.display = "none";
-            }, 3000);
+            setTimeout(function() { statusMsg.style.display = "none"; }, 3000);
         }
     }
 
@@ -1441,9 +1566,7 @@
                 resetFormToCreate();
                 loadProductsList();
 
-                setTimeout(function() {
-                    statusMsg.style.display = "none";
-                }, 3000);
+                setTimeout(function() { statusMsg.style.display = "none"; }, 3000);
             } else {
                 throw new Error(resData.message || "حدث خطأ أثناء الحفظ");
             }
@@ -1451,9 +1574,7 @@
         } catch (err) {
             statusMsg.className = "status-msg status-error";
             statusMsg.innerText = "❌ تعذر إتمام العملية: " + err.message;
-            setTimeout(function() {
-                statusMsg.style.display = "none";
-            }, 3000);
+            setTimeout(function() { statusMsg.style.display = "none"; }, 3000);
         } finally {
             submitBtn.disabled = false;
         }
