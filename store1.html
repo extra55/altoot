@@ -745,6 +745,41 @@
         var found = allCoupons.find(c => String(c.code).trim().toUpperCase() === codeVal);
 
         if (found) {
+            // حساب المجموع الفرعي للتحقق من الحد الأدنى للمبلغ
+            var subTotal = 0;
+            for (var id in cart) {
+                var p = getProductById(id);
+                if (p) {
+                    subTotal += p.price * cart[id];
+                }
+            }
+
+            // التحقق من الحد الأدنى (MinAmount)
+            if (found.minAmount !== undefined && found.minAmount !== null && found.minAmount !== "" && !isNaN(Number(found.minAmount))) {
+                if (subTotal < Number(found.minAmount)) {
+                    appliedCoupon = null;
+                    msg.style.display = "block";
+                    msg.style.color = "#ef4444";
+                    msg.innerText = "❌ عذراً، الحد الأدنى لاستخدام هذا الكود هو " + Number(found.minAmount).toLocaleString() + " د.ع";
+                    renderCartItems();
+                    return;
+                }
+            }
+
+            // التحقق من عدد مرات الاستخدام (UsageLimit)
+            if (found.usageLimit !== undefined && found.usageLimit !== null && found.usageLimit !== "" && !isNaN(Number(found.usageLimit))) {
+                var couponUses = JSON.parse(localStorage.getItem('coupon_uses') || '{}');
+                var usedCount = couponUses[found.code] || 0;
+                if (usedCount >= Number(found.usageLimit)) {
+                    appliedCoupon = null;
+                    msg.style.display = "block";
+                    msg.style.color = "#ef4444";
+                    msg.innerText = "❌ عذراً، لقد استنفدت الحد الأقصى لاستخدام هذا الكود";
+                    renderCartItems();
+                    return;
+                }
+            }
+
             appliedCoupon = found;
             msg.style.display = "block";
             msg.style.color = "#16a34a";
@@ -1114,7 +1149,25 @@
 
             var discountAmount = 0;
             if (appliedCoupon && appliedCoupon.discount) {
-                discountAmount = Math.round((subTotal * appliedCoupon.discount) / 100);
+                // التحقق من الحد الأدنى للمبلغ ديناميكياً عند تعديل السلة
+                if (appliedCoupon.minAmount !== undefined && appliedCoupon.minAmount !== null && appliedCoupon.minAmount !== "" && !isNaN(Number(appliedCoupon.minAmount))) {
+                    if (subTotal < Number(appliedCoupon.minAmount)) {
+                        var minAmtVal = Number(appliedCoupon.minAmount);
+                        appliedCoupon = null;
+                        var couponInput = document.getElementById("couponInput");
+                        if (couponInput) couponInput.value = "";
+                        var couponStatusMsg = document.getElementById("couponStatusMsg");
+                        if (couponStatusMsg) {
+                            couponStatusMsg.style.display = "block";
+                            couponStatusMsg.style.color = "#ef4444";
+                            couponStatusMsg.innerText = "❌ تم إلغاء كود الخصم لعدم الوصول إلى الحد الأدنى للمبلغ (" + minAmtVal.toLocaleString() + " د.ع)";
+                        }
+                    }
+                }
+
+                if (appliedCoupon && appliedCoupon.discount) {
+                    discountAmount = Math.round((subTotal * appliedCoupon.discount) / 100);
+                }
             }
             var finalTotal = subTotal - discountAmount;
 
@@ -1183,7 +1236,7 @@
 
         var invoiceNo = "INV-" + Math.floor(100000 + Math.random() * 900000);
 
-        // إرسال الطلب وحفظه في الشيت (Orders & Sales)[cite: 24]
+        // إرسال الطلب وحفظه في الشيت (Orders & Sales)
         fetch(SHEET_API_URL, {
             method: "POST",
             body: JSON.stringify({
@@ -1197,6 +1250,13 @@
                 total: finalTotal
             })
         }).catch(function(err) { console.log(err); });
+
+        // تسجيل استهلاك كود الخصم في الذاكرة المحلية لتطبيق شرط عدد مرات الاستخدام
+        if (appliedCoupon) {
+            var couponUses = JSON.parse(localStorage.getItem('coupon_uses') || '{}');
+            couponUses[appliedCoupon.code] = (couponUses[appliedCoupon.code] || 0) + 1;
+            localStorage.setItem('coupon_uses', JSON.stringify(couponUses));
+        }
 
         // إفراغ السلة وكود الخصم بعد إتمام الطلب مع الإبقاء على معلومات الزبون
         cart = {};
