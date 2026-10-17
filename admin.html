@@ -273,6 +273,31 @@
                         <input type="number" id="couponDiscount" placeholder="مثال: 10" min="1" max="100" required>
                     </div>
                 </div>
+
+                <!-- إعدادات عدد مرات الاستخدام -->
+                <div class="form-group">
+                    <label>عدد مرات الاستخدام *</label>
+                    <select id="couponUsageLimitType" onchange="toggleUsageLimitField()" style="margin-bottom: 8px;">
+                        <option value="unlimited">غير محدود</option>
+                        <option value="limited">محدود (برقم محدد)</option>
+                    </select>
+                    <div id="usageLimitCountBox" class="hidden">
+                        <input type="number" id="couponUsageLimit" placeholder="مثال: 3" min="1">
+                    </div>
+                </div>
+
+                <!-- إعدادات الحد المالي -->
+                <div class="form-group">
+                    <label>الحد المالي لتفعيل الكود *</label>
+                    <select id="couponMinAmountType" onchange="toggleMinAmountField()" style="margin-bottom: 8px;">
+                        <option value="unlimited">غير محدود (يعمل بأي مبلغ)</option>
+                        <option value="limited">محدود (بحد أدنى للمبلغ)</option>
+                    </select>
+                    <div id="minAmountBox" class="hidden">
+                        <input type="number" id="couponMinAmount" placeholder="مثال: 25000" min="0">
+                    </div>
+                </div>
+
                 <button type="submit" id="saveCouponBtn" class="btn-submit" style="background:#0284c7; margin-top:5px;">💾 حفظ الكود</button>
             </form>
         </div>
@@ -1206,6 +1231,28 @@
         renderHiddenProducts(filtered);
     }
 
+    function toggleUsageLimitField() {
+        var type = document.getElementById("couponUsageLimitType").value;
+        var box = document.getElementById("usageLimitCountBox");
+        if (type === "limited") {
+            box.classList.remove("hidden");
+        } else {
+            box.classList.add("hidden");
+            document.getElementById("couponUsageLimit").value = "";
+        }
+    }
+
+    function toggleMinAmountField() {
+        var type = document.getElementById("couponMinAmountType").value;
+        var box = document.getElementById("minAmountBox");
+        if (type === "limited") {
+            box.classList.remove("hidden");
+        } else {
+            box.classList.add("hidden");
+            document.getElementById("couponMinAmount").value = "";
+        }
+    }
+
     async function loadCouponsList() {
         var container = document.getElementById("couponsListContainer");
         
@@ -1245,11 +1292,15 @@
 
         var html = "";
         coupons.forEach(function(c) {
+            var usageText = (c.usageLimit !== undefined && c.usageLimit !== null && c.usageLimit !== "") ? `الاستخدام: ${c.usageLimit}` : "غير محدود";
+            var minAmtText = (c.minAmount !== undefined && c.minAmount !== null && c.minAmount !== "") ? `الحد الأدنى: ${Number(c.minAmount).toLocaleString()} د.ع` : "بدون حد أدنى";
+
             html += `
                 <div class="product-item" style="background:#0f172a; border:1px solid #334155; padding:12px; border-radius:8px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;">
                     <div>
                         <span style="font-weight:bold; color:#38bdf8; font-size:15px; font-family:monospace; background:#1e293b; padding:4px 8px; border-radius:6px; border:1px dashed #0284c7;">${c.code}</span>
                         <span style="color:#22c55e; font-weight:bold; font-size:13px; margin-right:10px;">خصم: ${c.discount}%</span>
+                        <div style="font-size:11px; color:#94a3b8; margin-top:4px;">🔄 ${usageText} | 💰 ${minAmtText}</div>
                     </div>
                     <div>
                         <button class="btn-action btn-delete" onclick="deleteCoupon('${c.code}')">🗑️ حذف</button>
@@ -1264,6 +1315,11 @@
         event.preventDefault();
         var code = document.getElementById("couponCode").value.trim().toUpperCase();
         var discount = document.getElementById("couponDiscount").value;
+        var usageLimitType = document.getElementById("couponUsageLimitType").value;
+        var usageLimit = usageLimitType === "limited" ? document.getElementById("couponUsageLimit").value : "";
+        var minAmountType = document.getElementById("couponMinAmountType").value;
+        var minAmount = minAmountType === "limited" ? document.getElementById("couponMinAmount").value : "";
+
         var btn = document.getElementById("saveCouponBtn");
         var statusMsg = document.getElementById('productStatus');
 
@@ -1277,7 +1333,13 @@
         try {
             var response = await fetch(SHEET_API_URL, {
                 method: "POST",
-                body: JSON.stringify({ action: "addCoupon", code: code, discount: discount })
+                body: JSON.stringify({ 
+                    action: "addCoupon", 
+                    code: code, 
+                    discount: discount,
+                    usageLimit: usageLimit,
+                    minAmount: minAmount
+                })
             });
 
             var resData = await response.json();
@@ -1292,6 +1354,13 @@
                 statusMsg.innerText = "✅ تم إضافة كود الخصم بنجاح";
                 document.getElementById("couponCode").value = "";
                 document.getElementById("couponDiscount").value = "";
+                document.getElementById("couponUsageLimitType").value = "unlimited";
+                document.getElementById("couponUsageLimit").value = "";
+                document.getElementById("usageLimitCountBox").classList.add("hidden");
+                document.getElementById("couponMinAmountType").value = "unlimited";
+                document.getElementById("couponMinAmount").value = "";
+                document.getElementById("minAmountBox").classList.add("hidden");
+
                 loadCouponsList();
 
                 setTimeout(function() { statusMsg.style.display = "none"; }, 3000);
